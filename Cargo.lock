@@ -6001,6 +6001,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-farcaster_frame"
+version = "0.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9dd21cd4046aa81de4dd2df61861b2c075b993ee79bfabae74af4ebc1ac54c47"
+dependencies = [
+ "parity-scale-codec",
+ "prost 0.13.4",
+ "prost-build",
+ "prost-types",
+ "scale-info",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "39.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6068,11 +6082,13 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-farcaster_frame",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
