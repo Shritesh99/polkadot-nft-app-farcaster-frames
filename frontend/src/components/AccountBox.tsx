@@ -1,37 +1,29 @@
 import React from "react";
+import { Button } from "./ui/Button";
+import { NFTMinting } from "./NFTMinting";
+import { ApiPromise } from "@polkadot/api";
+import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
+import type { Signer } from "@polkadot/types/types";
 
 const shorten = (str: string) => {
-	let size = 10;
+	const size = 10;
 	let result = str;
 	if (str && str.length > 2 * size) {
-		let start = str.slice(0, size);
-		let end = str.slice(-size);
+		const start = str.slice(0, size);
+		const end = str.slice(-size);
 		result = `${start}...${end}`;
 	}
 	return result;
 };
 
 interface AccountBoxParams {
-	account: { address: string; name: string };
-	signer: any;
-	api: any;
+	account: InjectedAccountWithMeta;
+	signer: Signer;
+	api: ApiPromise;
 }
 
 export const AccountBox = ({ api, account, signer }: AccountBoxParams) => {
-	const signTransactionHandler = async (event: any) => {
-		event.preventDefault();
-		event.stopPropagation();
-		if (api && account?.address && signer) {
-			const decimals = api.registry.chainDecimals[0];
-
-			await api.tx.system
-				.remark("I am signing this transaction!")
-				.signAndSend(account.address, { signer }, () => {
-					// do something with result
-				});
-		}
-	};
-	const signMessageHandler = async (event: any) => {
+	const signMessageHandler = async (event: React.MouseEvent) => {
 		event.preventDefault();
 		event.stopPropagation();
 		const signRaw = signer?.signRaw;
@@ -42,24 +34,24 @@ export const AccountBox = ({ api, account, signer }: AccountBoxParams) => {
 				data: "I am signing this message",
 				type: "bytes",
 			});
+			console.log("Message signed:", signature);
 		}
 	};
 
 	return (
-		<div className={``}>
-			<div className={``}>{shorten(account?.name)}</div>
-			<div className={``}>{shorten(account?.address)}</div>
-			<div className={``}>
-				<button
-					className={``}
-					onClick={(e) => signTransactionHandler(e)}>
-					Submit Transaction
-				</button>
-				<button
-					className={``}
-					onClick={(e) => signMessageHandler(e)}>
+		<div className="p-4 rounded-lg bg-white shadow-md">
+			<div className="text-sm text-gray-600 mb-4">
+				{shorten(account?.address)}
+			</div>
+
+			<NFTMinting api={api} account={account} signer={signer} />
+
+			<div className="mt-4">
+				<Button
+					className="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-md transition-colors"
+					onClick={signMessageHandler}>
 					Sign Message
-				</button>
+				</Button>
 			</div>
 		</div>
 	);

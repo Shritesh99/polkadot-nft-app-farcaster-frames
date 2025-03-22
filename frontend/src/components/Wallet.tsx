@@ -1,14 +1,17 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { BaseWallet, Account } from "@polkadot-onboard/core";
 import { AccountBox } from "./AccountBox";
 import React from "react";
+import { Button } from "./ui/Button";
+import { ShowWalletsContext } from "./contexts/ShowWalletsContext";
 
 const Wallet = ({ wallet }: { wallet: BaseWallet }) => {
 	const [accounts, setAccounts] = useState<Account[]>([]);
 	const [api, setApi] = useState<ApiPromise | null>(null);
 	const [isBusy, setIsBusy] = useState<boolean>(false);
+	const { setShowWallets } = useContext(ShowWalletsContext);
 
 	useEffect(() => {
 		const setupApi = async () => {
@@ -39,11 +42,8 @@ const Wallet = ({ wallet }: { wallet: BaseWallet }) => {
 	};
 
 	return (
-		<div
-			className={``}
-			style={{ marginBottom: "20px" }}
-			onClick={walletClickHandler}>
-			<div className={``}>
+		<div style={{ marginBottom: "20px" }} onClick={walletClickHandler}>
+			<div>
 				<div
 					style={{
 						margin: 5,
@@ -63,7 +63,7 @@ const Wallet = ({ wallet }: { wallet: BaseWallet }) => {
 					wallet.metadata.version || ""
 				}`}</div>
 			</div>
-			<div className={``}>
+			<div>
 				{accounts.length > 0 &&
 					accounts.map(({ address, name = "" }) => (
 						<div key={address}>
@@ -74,6 +74,18 @@ const Wallet = ({ wallet }: { wallet: BaseWallet }) => {
 							/>
 						</div>
 					))}
+				{accounts.length > 0 && (
+					<div className="mb-4">
+						<Button
+							onClick={(e) => {
+								(async () =>
+									await wallet.disconnect())();
+								setShowWallets(false);
+							}}>
+							Disconnect
+						</Button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
