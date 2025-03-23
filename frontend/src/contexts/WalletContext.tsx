@@ -3,12 +3,11 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
 import { useWallets } from "@polkadot-onboard/react";
 import type { BaseWallet } from "@polkadot-onboard/core";
-import { web3FromSource } from "@polkadot/extension-dapp";
 
 interface WalletContextType {
 	accounts: InjectedAccountWithMeta[];
 	selectedAccount: InjectedAccountWithMeta | null;
-	signer: Signer | null;
+	signer: Signer | undefined;
 	isConnecting: boolean;
 	error: Error | null;
 	connectWallet: () => Promise<void>;
@@ -22,7 +21,7 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType>({
 	accounts: [],
 	selectedAccount: null,
-	signer: null,
+	signer: undefined,
 	isConnecting: false,
 	error: null,
 	connectWallet: async () => {},
@@ -41,7 +40,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 	const [accounts, setAccounts] = useState<InjectedAccountWithMeta[]>([]);
 	const [selectedAccount, setSelectedAccount] =
 		useState<InjectedAccountWithMeta | null>(null);
-	const [signer, setSigner] = useState<Signer | null>(null);
+	const [signer, setSigner] = useState<Signer | undefined>(undefined);
 	const [isConnecting, setIsConnecting] = useState(false);
 	const [error, setError] = useState<Error | null>(null);
 	const [selectedWallet, setSelectedWallet] = useState<BaseWallet | null>(
@@ -72,7 +71,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 					address: account.address,
 					meta: {
 						name: account.name || "Unknown",
-						source: wallet.metadata.id,
+						source: "polkadot-js",
 					},
 					type: account.type || "sr25519",
 				}));
@@ -104,15 +103,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 			if (!selectedWallet) {
 				throw new Error("No wallet selected");
 			}
-
-			// Get the signer from the selected wallet
-			const injector = await web3FromSource(account.meta.source);
-			if (!injector || !injector.signer) {
-				throw new Error("No signer found for the selected account");
-			}
-
 			setSelectedAccount(account);
-			setSigner(injector.signer as unknown as Signer);
+			setSigner(selectedWallet.signer);
 		} catch (err) {
 			console.error("Failed to select account:", err);
 			setError(
@@ -121,7 +113,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 					: new Error("Failed to select account")
 			);
 			setSelectedAccount(null);
-			setSigner(null);
+			setSigner(undefined);
 		} finally {
 			setIsConnecting(false);
 		}
@@ -131,18 +123,18 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 		try {
 			setIsConnecting(true);
 			setError(null);
-
 			if (availableWallets.length === 0) {
 				throw new Error(
 					"No wallets available. Please install a Polkadot wallet."
 				);
 			}
 
-			// If there's only one wallet available, select it automatically
+			// // If there's only one wallet available, select it automatically
 			if (availableWallets.length === 1) {
-				await selectWallet(availableWallets[0]);
+				const wallet = availableWallets[0];
+				await wallet.connect();
+				await selectWallet(wallet);
 			}
-			// Otherwise, the UI will show the wallet selection
 		} catch (err) {
 			console.error("Failed to connect wallet:", err);
 			setError(
@@ -165,7 +157,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 		}
 		setSelectedWallet(null);
 		setSelectedAccount(null);
-		setSigner(null);
+		setSigner(undefined);
 		setAccounts([]);
 		setError(null);
 	};

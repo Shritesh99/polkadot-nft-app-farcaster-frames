@@ -46,7 +46,6 @@ export const WalletStatus: React.FC = () => {
 			</div>
 		);
 	}
-
 	return (
 		<div className="p-4 bg-white border border-gray-200 rounded-md shadow-sm">
 			<h3 className="font-bold text-gray-800 mb-2">

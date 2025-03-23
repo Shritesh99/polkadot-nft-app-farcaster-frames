@@ -116,18 +116,10 @@ export default function Demo() {
 					)}
 					{availableWallets.length === 0 ? (
 						<div className="text-center text-gray-600">
-							No wallets found. Please install a Polkadot
-							wallet.
+							No wallets found. Please connect a wallet.
 						</div>
 					) : (
-						<Button
-							onClick={async () => await connectWallet()}
-							disabled={isConnecting}
-							className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md transition-colors disabled:bg-blue-300">
-							{isConnecting
-								? "Connecting..."
-								: "Connect Wallet"}
-						</Button>
+						<></>
 					)}
 				</div>
 			) : !selectedAccount ? (

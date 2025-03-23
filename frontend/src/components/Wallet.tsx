@@ -31,7 +31,6 @@ const Wallet = ({ wallet }: { wallet: BaseWallet }) => {
 				setIsBusy(true);
 				await wallet.connect();
 				let accounts = await wallet.getAccounts();
-				console.log(accounts);
 				setAccounts(accounts);
 			} catch (error) {
 				// handle error
