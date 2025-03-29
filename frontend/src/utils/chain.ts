@@ -10,16 +10,6 @@ export const connectToChain = async (): Promise<ApiPromise> => {
 		// Create the API instance
 		const api = await ApiPromise.create({
 			provider: wsProvider,
-			types: {
-				// Add any custom types your runtime uses here
-				NFT: {
-					owner: "AccountId",
-					metadata: "Vec<u8>",
-				},
-			},
-			rpc: {
-				// Add any custom RPC methods here if needed
-			},
 		});
 
 		// Wait until we are ready and connected

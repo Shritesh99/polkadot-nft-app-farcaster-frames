@@ -1,33 +1,39 @@
 {
-  "name": "polkadot-nft-farcaster-frames-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
-  "dependencies": {
-    "@farcaster/frame-sdk": "^0.0.31",
-    "@polkadot-onboard/core": "^1.1.0",
-    "@polkadot-onboard/injected-wallets": "^1.1.0",
-    "@polkadot-onboard/react": "^1.1.0",
-    "@polkadot-onboard/wallet-connect": "^1.1.0",
-    "@polkadot/util-crypto": "^13.4.3",
-    "next": "15.2.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.2.1",
-    "tailwindcss": "^4",
-    "typescript": "^5"
-  }
+	"name": "polkadot-nft-farcaster-frames-frontend",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"dev": "next dev",
+		"build": "next build",
+		"typegen": "yarn generate:defs && yarn generate:meta",
+		"start": "next start",
+		"generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package my-app/types --input ./src/interfaces --endpoint ./edgeware.json",
+		"generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package my-app/types --endpoint ./edgeware.json --output ./src/interfaces",
+		"lint": "tsc --noEmit --pretty && next lint"
+	},
+	"dependencies": {
+		"@farcaster/frame-sdk": "^0.0.31",
+		"@polkadot-onboard/core": "^1.1.0",
+		"@polkadot-onboard/injected-wallets": "^1.1.0",
+		"@polkadot-onboard/react": "^1.1.0",
+		"@polkadot-onboard/wallet-connect": "^1.1.0",
+		"@polkadot/api": "^15.9.1",
+		"@polkadot/util-crypto": "^13.4.3",
+		"next": "15.2.1",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3",
+		"@polkadot/typegen": "^15.9.1",
+		"@tailwindcss/postcss": "^4",
+		"@types/node": "^20",
+		"@types/react": "^19",
+		"@types/react-dom": "^19",
+		"eslint": "^9",
+		"eslint-config-next": "15.2.1",
+		"tailwindcss": "^4",
+		"ts-node": "^10.9.2",
+		"typescript": "^5"
+	}
 }

@@ -213,7 +213,7 @@ export const NFTMinting: React.FC<NFTMintingProps> = ({
 
 		setIsLoading(true);
 		try {
-			const tx = api.tx.templateModule.mintNft(
+			const tx = api.tx.template.mintNft(
 				collectionId,
 				Array.from(metadata).map((c) => c.charCodeAt(0))
 			);
@@ -251,7 +251,7 @@ export const NFTMinting: React.FC<NFTMintingProps> = ({
 
 		setIsLoading(true);
 		try {
-			const tx = api.tx.templateModule.transferNft(
+			const tx = api.tx.template.transferNft(
 				selectedCollection,
 				itemId,
 				toAddress
