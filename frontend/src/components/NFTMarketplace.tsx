@@ -3,6 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
 import { Button } from "./ui/Button";
+import { decodeMetadata } from "../utils/utils";
 
 interface NFTMarketplaceProps {
 	api: ApiPromise;
@@ -10,15 +11,22 @@ interface NFTMarketplaceProps {
 	signer: Signer;
 }
 
-interface Collection {
+interface NFT {
 	id: number;
+	collectionId: number;
 	metadata: {
 		title: string;
 		description: string;
 		image: string;
-		price: string;
-		creator: string;
 	};
+	owner: string;
+	is_sold: boolean;
+}
+
+interface NFTData {
+	owner: string;
+	metadata: string;
+	is_sold: boolean;
 }
 
 export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
@@ -26,45 +34,104 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 	account,
 	signer,
 }) => {
-	const [collections, setCollections] = useState<Collection[]>([]);
+	const [nfts, setNfts] = useState<NFT[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		loadCollections();
+		loadNFTs();
 	}, [api]);
 
-	const loadCollections = async () => {
+	const loadNFTs = async () => {
 		if (!api) return;
 
 		setIsLoading(true);
 		setError(null);
 
 		try {
-			// Fetch all collections
+			// First get all collections
 			const collections =
 				await api.query.template.collections.entries();
-			const formattedCollections = collections.map(([key, value]) => {
-				const id = Number(key.args[0].toString());
-				const metadata = JSON.parse(value.toString());
-				return { id, metadata };
-			});
-			setCollections(formattedCollections);
+
+			// For each collection, get its NFTs
+			const allNFTs: NFT[] = [];
+
+			for (const [key] of collections) {
+				const collectionId = Number(key.args[0].toString());
+				const nextItemId = await api.query.template.nextItemId(
+					collectionId
+				);
+
+				for (
+					let itemId = 0;
+					itemId < Number(nextItemId.toString() + 1);
+					itemId++
+				) {
+					try {
+						const nft = await api.query.template.nfts(
+							collectionId,
+							itemId
+						);
+
+						if (nft.isEmpty) {
+							continue;
+						}
+
+						const rawData = nft.toJSON();
+						if (!rawData || typeof rawData !== "object") {
+							continue;
+						}
+
+						const nftData = rawData as unknown as NFTData;
+						const metadataStr = decodeMetadata(
+							nftData.metadata
+						);
+						let metadata;
+						try {
+							metadata = JSON.parse(metadataStr);
+						} catch (e) {
+							console.error(
+								"Failed to parse metadata:",
+								e
+							);
+						}
+						allNFTs.push({
+							id: itemId,
+							collectionId,
+							metadata,
+							owner: nftData.owner,
+							is_sold: nftData.is_sold,
+						});
+					} catch (error) {
+						console.error(
+							`Error loading NFT ${itemId} from collection ${collectionId}:`,
+							error
+						);
+						continue;
+					}
+				}
+			}
+
+			setNfts(allNFTs);
 		} catch (error) {
-			console.error("Failed to load collections:", error);
+			console.error("Failed to load NFTs:", error);
 			setError(
 				error instanceof Error
 					? error.message
-					: "Failed to load collections"
+					: "Failed to load NFTs"
 			);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	const handleMint = async (collectionId: number) => {
+	const handleTransfer = async (
+		collectionId: number,
+		itemId: number,
+		to: string
+	) => {
 		if (!api || !account?.address || !signer) {
-			setError("Missing required properties for minting");
+			setError("Missing required properties for transfer");
 			return;
 		}
 
@@ -72,36 +139,36 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		setError(null);
 
 		try {
-			const tx = api.tx.template.mintNFT(collectionId);
+			const tx = api.tx.template.transferNft(collectionId, itemId, to);
 			await tx.signAndSend(
 				account.address,
 				{ signer },
 				({ status }) => {
 					if (status.isInBlock) {
 						console.log(
-							`NFT minted in block ${status.asInBlock.toString()}`
+							`NFT transferred in block ${status.asInBlock.toString()}`
 						);
-						loadCollections(); // Refresh collections after minting
+						loadNFTs(); // Refresh NFTs after transfer
 					}
 				}
 			);
 		} catch (error) {
-			console.error("Failed to mint NFT:", error);
+			console.error("Failed to transfer NFT:", error);
 			setError(
 				error instanceof Error
 					? error.message
-					: "Failed to mint NFT"
+					: "Failed to transfer NFT"
 			);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	if (isLoading && collections.length === 0) {
+	if (isLoading && nfts.length === 0) {
 		return (
 			<div className="text-center py-8">
 				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-				<p className="mt-2 text-gray-600">Loading collections...</p>
+				<p className="mt-2 text-gray-600">Loading NFTs...</p>
 			</div>
 		);
 	}
@@ -117,49 +184,84 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 	return (
 		<div className="max-w-6xl mx-auto p-6">
 			<h2 className="text-2xl font-bold text-gray-800 mb-6">
-				Available Collections
+				Available NFTs
 			</h2>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{collections.map((collection) => (
+				{nfts.map((nft) => (
 					<div
-						key={collection.id}
+						key={`${nft.collectionId}-${nft.id}`}
 						className="bg-white rounded-lg shadow-md overflow-hidden">
-						<img
-							src={collection.metadata.image}
-							alt={collection.metadata.title}
-							className="w-full h-48 object-cover"
-						/>
+						{nft.metadata.image && (
+							<img
+								src={nft.metadata.image}
+								alt={
+									nft.metadata.title ||
+									`NFT #${nft.id}`
+								}
+								className="w-full h-48 object-cover"
+							/>
+						)}
 						<div className="p-4">
 							<h3 className="text-xl font-semibold text-gray-800">
-								{collection.metadata.title}
+								{nft.metadata.title || `NFT #${nft.id}`}
 							</h3>
 							<p className="text-gray-600 mt-2">
-								{collection.metadata.description}
+								{nft.metadata.description}
 							</p>
-							<div className="mt-4 flex justify-between items-center">
-								<span className="text-lg font-bold text-blue-600">
-									{collection.metadata.price} DOT
-								</span>
-								<Button
-									onClick={() =>
-										handleMint(collection.id)
-									}
-									disabled={isLoading}
-									className="bg-blue-600 hover:bg-blue-700 text-white">
-									{isLoading
-										? "Minting..."
-										: "Mint NFT"}
-								</Button>
+							<div className="mt-4 space-y-2">
+								<p className="text-sm text-gray-500">
+									Collection #{nft.collectionId} |
+									NFT #{nft.id}
+								</p>
+								<p className="text-sm text-gray-500">
+									Owner: {nft.owner.slice(0, 6)}...
+									{nft.owner.slice(-4)}
+								</p>
+
+								<p className="text-sm text-gray-500">
+									Status:{" "}
+									{nft.is_sold
+										? "Sold"
+										: "Available"}
+								</p>
+								{nft.owner === account.address && (
+									<div className="space-y-2">
+										<input
+											type="text"
+											placeholder="Recipient address"
+											className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+											id={`transfer-${nft.collectionId}-${nft.id}`}
+										/>
+										<Button
+											onClick={() => {
+												const input =
+													document.getElementById(
+														`transfer-${nft.collectionId}-${nft.id}`
+													) as HTMLInputElement;
+												handleTransfer(
+													nft.collectionId,
+													nft.id,
+													input.value
+												);
+											}}
+											disabled={isLoading}
+											className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+											{isLoading
+												? "Transferring..."
+												: "Transfer NFT"}
+										</Button>
+									</div>
+								)}
 							</div>
 						</div>
 					</div>
 				))}
 			</div>
 
-			{collections.length === 0 && (
+			{nfts.length === 0 && (
 				<div className="text-center py-8 text-gray-600">
-					No collections available yet.
+					No NFTs available yet.
 				</div>
 			)}
 		</div>

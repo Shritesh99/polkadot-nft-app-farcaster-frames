@@ -23,6 +23,7 @@ pub mod pallet {
     pub struct NFT<AccountId> {
         pub owner: AccountId,
         pub metadata: BoundedVec<u8, ConstU32<256>>,
+        pub is_sold: bool,
     }
 
     #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, Default, TypeInfo, MaxEncodedLen)]
@@ -30,6 +31,7 @@ pub mod pallet {
         pub creator: AccountId,
         pub metadata: BoundedVec<u8, ConstU32<256>>,
         pub is_frozen: bool, // Prevents further modifications
+        pub nfts: BoundedVec<ItemId, ConstU32<256>>, // List of NFT IDs in the collection
     }
 
     pub type CollectionId = u32;
@@ -85,6 +87,7 @@ pub mod pallet {
         NFTMinted(CollectionId, ItemId, T::AccountId),
         NFTBatchMinted(CollectionId, Vec<ItemId>, T::AccountId),
         NFTTransferred(CollectionId, ItemId, T::AccountId, T::AccountId),
+        NFTBurned(CollectionId, ItemId, T::AccountId),
     }
 
     #[pallet::error]
@@ -96,6 +99,8 @@ pub mod pallet {
         AlreadyRegistered,
         CollectionFrozen,
         NotCollectionOwner,
+        NFTAlreadySold,
+        MetadataInvalid,
     }
 
     #[pallet::call]
@@ -128,7 +133,7 @@ pub mod pallet {
 
             let bounded_metadata: BoundedVec<u8, ConstU32<256>> = metadata
                 .try_into()
-                .map_err(|_| Error::<T>::CollectionNotFound)?;
+                .map_err(|_| Error::<T>::MetadataInvalid)?;
 
             let collection_id = NextCollectionId::<T>::get();
 
@@ -136,6 +141,7 @@ pub mod pallet {
                 creator: creator.clone(),
                 metadata: bounded_metadata,
                 is_frozen: false,
+                nfts: BoundedVec::new(), // Initialize empty list of NFT IDs
             };
 
             Collections::<T>::insert(collection_id, collection);
@@ -164,7 +170,7 @@ pub mod pallet {
 
                 collection.metadata = metadata
                     .try_into()
-                    .map_err(|_| Error::<T>::CollectionNotFound)?;
+                    .map_err(|_| Error::<T>::MetadataInvalid)?;
                 Ok(())
             })?;
 
@@ -230,16 +236,34 @@ pub mod pallet {
 
             let mut minted_ids = Vec::new();
             for metadata in metadata_list {
-                let bounded_metadata: BoundedVec<u8, ConstU32<256>> =
-                    metadata.try_into().map_err(|_| Error::<T>::NFTNotFound)?;
+                let bounded_metadata: BoundedVec<u8, ConstU32<256>> = metadata
+                    .try_into()
+                    .map_err(|_| Error::<T>::MetadataInvalid)?;
 
                 let item_id = NextItemId::<T>::get(collection_id);
                 let nft = NFT {
                     owner: sender.clone(),
                     metadata: bounded_metadata,
+                    is_sold: false,
                 };
 
                 Nfts::<T>::insert(collection_id, item_id, nft);
+
+                // Add the NFT ID to the collection
+                Collections::<T>::try_mutate(
+                    collection_id,
+                    |collection_option| -> DispatchResult {
+                        let collection = collection_option
+                            .as_mut()
+                            .ok_or(Error::<T>::CollectionNotFound)?;
+                        collection
+                            .nfts
+                            .try_push(item_id)
+                            .map_err(|_| Error::<T>::CollectionNotFound)?;
+                        Ok(())
+                    },
+                )?;
+
                 NextItemId::<T>::insert(collection_id, item_id.saturating_add(1));
                 minted_ids.push(item_id);
             }
@@ -257,24 +281,49 @@ pub mod pallet {
             metadata: Vec<u8>,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
-
             ensure!(
                 Collections::<T>::contains_key(collection_id),
                 Error::<T>::CollectionNotFound
             );
+            let bounded_metadata: BoundedVec<u8, ConstU32<256>> = metadata
+                .try_into()
+                .map_err(|_| Error::<T>::MetadataInvalid)?;
 
-            let bounded_metadata: BoundedVec<u8, ConstU32<256>> =
-                metadata.try_into().map_err(|_| Error::<T>::NFTNotFound)?;
-
+            // Get the current item_id or initialize to 0 if it doesn't exist
             let item_id = NextItemId::<T>::get(collection_id);
+
             let nft = NFT {
                 owner: sender.clone(),
                 metadata: bounded_metadata,
+                is_sold: false,
             };
 
-            Nfts::<T>::insert(collection_id, item_id, nft);
-            NextItemId::<T>::insert(collection_id, item_id.saturating_add(1));
+            // Insert the NFT into storage
+            Nfts::<T>::insert(collection_id, item_id, nft.clone());
 
+            // Verify the NFT was properly stored
+            ensure!(
+                Nfts::<T>::contains_key(collection_id, item_id),
+                Error::<T>::NFTNotFound
+            );
+
+            // Add the NFT ID to the collection
+            Collections::<T>::try_mutate(collection_id, |collection_option| -> DispatchResult {
+                let collection = collection_option
+                    .as_mut()
+                    .ok_or(Error::<T>::CollectionNotFound)?;
+                collection
+                    .nfts
+                    .try_push(item_id)
+                    .map_err(|_| Error::<T>::CollectionNotFound)?;
+                // Save the updated collection back to storage
+                Collections::<T>::insert(collection_id, collection.clone());
+                Ok(())
+            })?;
+
+            // Increment the next item ID
+            let next_id = item_id.saturating_add(1);
+            NextItemId::<T>::insert(collection_id, next_id);
             Self::deposit_event(Event::NFTMinted(collection_id, item_id, sender));
             Ok(())
         }
@@ -294,10 +343,42 @@ pub mod pallet {
                 let nft = nft_option.as_mut().ok_or(Error::<T>::NFTNotFound)?;
                 ensure!(nft.owner == sender, Error::<T>::NotNFTOwner);
                 nft.owner = to.clone();
+                nft.is_sold = true;
                 Ok(())
             })?;
 
             Self::deposit_event(Event::NFTTransferred(collection_id, item_id, sender, to));
+            Ok(())
+        }
+
+        /// Burn an NFT (only if not sold)
+        #[pallet::call_index(8)]
+        #[pallet::weight(Weight::default())]
+        pub fn burn_nft(
+            origin: OriginFor<T>,
+            collection_id: CollectionId,
+            item_id: ItemId,
+        ) -> DispatchResult {
+            let sender = ensure_signed(origin)?;
+
+            // Check if the NFT exists and the caller is the owner
+            let nft = Nfts::<T>::get(collection_id, item_id).ok_or(Error::<T>::NFTNotFound)?;
+            ensure!(nft.owner == sender, Error::<T>::NotNFTOwner);
+            ensure!(!nft.is_sold, Error::<T>::NFTAlreadySold);
+
+            // Remove the NFT from storage
+            Nfts::<T>::remove(collection_id, item_id);
+
+            // Remove the NFT ID from the collection
+            Collections::<T>::try_mutate(collection_id, |collection_option| -> DispatchResult {
+                let collection = collection_option
+                    .as_mut()
+                    .ok_or(Error::<T>::CollectionNotFound)?;
+                collection.nfts.retain(|&id| id != item_id);
+                Ok(())
+            })?;
+
+            Self::deposit_event(Event::NFTBurned(collection_id, item_id, sender));
             Ok(())
         }
     }

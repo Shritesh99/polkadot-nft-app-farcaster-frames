@@ -123,7 +123,7 @@ export default function Demo() {
 			) : api && selectedAccount && signer ? (
 				<>
 					<div className="mb-4 flex justify-between items-center">
-						<div className="text-sm text-gray-600">
+						<div className="text-sm">
 							Connected:{" "}
 							{selectedAccount.address.slice(0, 6)}...
 							{selectedAccount.address.slice(-4)}
@@ -138,6 +138,8 @@ export default function Demo() {
 									? "Switch to Marketplace"
 									: "Switch to Artist Mode"}
 							</Button>
+							<div className="mb-2"></div>{" "}
+							{/* Added space between buttons */}
 							<Button
 								onClick={disconnectWallet}
 								className="text-sm bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md">

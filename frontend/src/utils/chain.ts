@@ -10,6 +10,13 @@ export const connectToChain = async (): Promise<ApiPromise> => {
 		// Create the API instance
 		const api = await ApiPromise.create({
 			provider: wsProvider,
+			types: {
+				NFTMetadata: {
+					title: "BoundedVec<u8, ConstU32<64>>",
+					description: "BoundedVec<u8, ConstU32<128>>",
+					image: "BoundedVec<u8, ConstU32<256>>",
+				},
+			},
 		});
 
 		// Wait until we are ready and connected

@@ -6082,6 +6082,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-farcaster_frame",
  "parity-scale-codec",
  "scale-info",
