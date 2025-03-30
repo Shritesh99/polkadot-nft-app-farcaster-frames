@@ -6,32 +6,35 @@ export const ChainStatus: React.FC = () => {
 
 	if (error) {
 		return (
-			<div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-				<h3 className="font-bold">Chain Connection Error</h3>
-				<p>{error.message}</p>
+			<div className="flex items-center text-red-600 text-sm">
+				<div className="w-2 h-2 bg-red-600 rounded-full mr-2"></div>
+				<span>Chain Error</span>
 			</div>
 		);
 	}
 
 	if (isConnecting) {
 		return (
-			<div className="p-4 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md">
-				Connecting to local chain...
+			<div className="flex items-center text-yellow-600 text-sm">
+				<div className="w-2 h-2 bg-yellow-600 rounded-full mr-2 animate-pulse"></div>
+				<span>Connecting...</span>
 			</div>
 		);
 	}
 
 	if (!api) {
 		return (
-			<div className="p-4 bg-gray-100 border border-gray-400 text-gray-700 rounded-md">
-				Not connected to chain
+			<div className="flex items-center text-gray-600 text-sm">
+				<div className="w-2 h-2 bg-gray-600 rounded-full mr-2"></div>
+				<span>Disconnected</span>
 			</div>
 		);
 	}
 
 	return (
-		<div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
-			Connected to local chain
+		<div className="flex items-center text-green-600 text-sm">
+			<div className="w-2 h-2 bg-green-600 rounded-full mr-2"></div>
+			<span>Connected</span>
 		</div>
 	);
 };

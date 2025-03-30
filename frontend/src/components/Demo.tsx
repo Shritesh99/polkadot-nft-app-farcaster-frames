@@ -3,20 +3,26 @@ import sdk from "@farcaster/frame-sdk";
 import React from "react";
 import { useWallet } from "../contexts/WalletContext";
 import { Button } from "./ui/components/Button";
-import type { WalletMetadata } from "@polkadot-onboard/core";
 import { ArtistDashboard } from "./ArtistDashboard";
 import { NFTMarketplace } from "./NFTMarketplace";
+import { UserDashboard } from "./UserDashboard";
 import { useChain } from "../contexts/ChainContext";
+import toast from "react-hot-toast";
 
-export default function Demo() {
+type View = "marketplace" | "artist" | "collection";
+
+interface DemoProps {
+	setConnectModalOpen: (open: boolean) => void;
+}
+
+export const Demo: React.FC<DemoProps> = ({ setConnectModalOpen }) => {
 	const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-	const [isArtistMode, setIsArtistMode] = useState(false);
+	const [currentView, setCurrentView] = useState<View>("marketplace");
 	const { api } = useChain();
 	const {
 		selectedAccount,
 		signer,
 		error: walletError,
-		availableWallets,
 		selectedWallet,
 	} = useWallet();
 
@@ -30,75 +36,117 @@ export default function Demo() {
 		}
 	}, [isSDKLoaded]);
 
-	return (
-		<div className="w-full max-w-6xl mx-auto py-4 px-2">
-			<h1 className="text-2xl font-bold text-center mb-4">
-				NFT Marketplace
-			</h1>
-			{!selectedWallet ? (
+	useEffect(() => {
+		if (walletError) {
+			toast.error(walletError.message);
+		}
+	}, [walletError]);
+	if (!selectedWallet) {
+		return (
+			<div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
 				<div className="text-center">
-					<h2 className="text-xl font-bold">
-						Please Connect Wallet
+					<h2 className="text-3xl font-bold text-gray-900 mb-4">
+						Welcome to NFT Marketplace
 					</h2>
-					{walletError && (
-						<div className="text-red-500 text-sm p-2 bg-red-50 rounded-md">
-							{walletError.message}
-						</div>
-					)}
-					{availableWallets.length === 0 ? (
-						<div className="text-center text-gray-600">
-							No wallets found. Please connect a wallet.
-						</div>
-					) : (
-						<></>
-					)}
-				</div>
-			) : !selectedAccount ? (
-				<div className="text-center">
-					<h2 className="text-xl font-bold">
-						Please Select an Account
-					</h2>
-				</div>
-			) : api && selectedAccount && signer ? (
-				<>
-					<div className="mb-4 flex justify-between items-center">
-						<div className="text-sm">
-							Connected:{" "}
-							{selectedAccount.address.slice(0, 6)}...
-							{selectedAccount.address.slice(-4)}
-						</div>
-						<div className="flex space-x-4">
-							<Button
-								onClick={() =>
-									setIsArtistMode(!isArtistMode)
-								}
-								className="text-sm bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md mr-2">
-								{isArtistMode
-									? "Switch to Marketplace"
-									: "Switch to Artist Mode"}
-							</Button>
-						</div>
+					<p className="text-gray-600 mb-8 max-w-md mx-auto">
+						Connect your wallet to start exploring and trading
+						NFTs
+					</p>
+					<div className="animate-pulse">
+						<Button
+							onClick={() => setConnectModalOpen(true)}
+							variant="primary">
+							Connect Wallet
+						</Button>
 					</div>
-					{isArtistMode ? (
-						<ArtistDashboard
-							api={api}
-							account={selectedAccount}
-							signer={signer}
-						/>
-					) : (
-						<NFTMarketplace
-							api={api}
-							account={selectedAccount}
-							signer={signer}
-						/>
-					)}
-				</>
-			) : (
-				<div className="text-center">
-					<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-					Connecting to wallet...
 				</div>
-			)}
+			</div>
+		);
+	}
+
+	if (!selectedAccount) {
+		return (
+			<div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+				<div className="text-center">
+					<h2 className="text-3xl font-bold text-gray-900 mb-4">
+						Select an Account
+					</h2>
+					<p className="text-gray-600 max-w-md mx-auto">
+						Please select an account from your connected
+						wallet to continue
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (!api || !selectedAccount || !signer) {
+		return (
+			<div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+				<div className="text-center">
+					<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+					<p className="text-gray-600">Connecting to chain...</p>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="space-y-6">
+			<div className="flex flex-wrap gap-4">
+				<Button
+					onClick={() => setCurrentView("marketplace")}
+					variant={
+						currentView === "marketplace"
+							? "primary"
+							: "secondary"
+					}
+					size="lg">
+					Browse NFTs
+				</Button>
+				<Button
+					onClick={() => setCurrentView("collection")}
+					variant={
+						currentView === "collection"
+							? "primary"
+							: "secondary"
+					}
+					size="lg">
+					My Collection
+				</Button>
+				<Button
+					onClick={() => setCurrentView("artist")}
+					variant={
+						currentView === "artist" ? "primary" : "secondary"
+					}
+					size="lg">
+					Artist Dashboard
+				</Button>
+			</div>
+
+			<div className="bg-white shadow-sm rounded-lg p-6">
+				{currentView === "marketplace" && (
+					<NFTMarketplace
+						api={api}
+						account={selectedAccount}
+						signer={signer}
+					/>
+				)}
+				{currentView === "collection" && (
+					<UserDashboard
+						api={api}
+						account={selectedAccount}
+						signer={signer}
+					/>
+				)}
+				{currentView === "artist" && (
+					<ArtistDashboard
+						api={api}
+						account={selectedAccount}
+						signer={signer}
+					/>
+				)}
+			</div>
 		</div>
 	);
-}
+};
