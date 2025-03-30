@@ -249,13 +249,6 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 									Owner: {nft.owner.slice(0, 6)}...
 									{nft.owner.slice(-4)}
 								</p>
-
-								<p className="text-sm text-gray-500">
-									Status:{" "}
-									{!nft.is_sold
-										? "Sold"
-										: "Available"}
-								</p>
 								{nft.owner === account.address ? (
 									<div className="space-y-2">
 										<input
