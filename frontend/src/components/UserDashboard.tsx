@@ -4,6 +4,7 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
 import { Button } from "./ui/components/Button";
 import toast from "react-hot-toast";
+import { decodeMetadata } from "../utils/utils";
 
 interface UserDashboardProps {
 	api: ApiPromise;
@@ -20,17 +21,13 @@ interface NFT {
 		image: string;
 	};
 	owner: string;
-	is_sold: boolean;
+	isSold: boolean;
 }
 
-interface Collection {
-	id: number;
-	metadata: {
-		title: string;
-		description: string;
-		creator: string;
-	};
-	nfts: NFT[];
+interface NFTData {
+	owner: string;
+	metadata: string;
+	isSold: boolean;
 }
 
 export const UserDashboard: React.FC<UserDashboardProps> = ({
@@ -38,79 +35,86 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 	account,
 	signer,
 }) => {
-	const [collections, setCollections] = useState<Collection[]>([]);
+	const [userNFTs, setUserNFTs] = useState<NFT[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
-		loadUserCollections();
+		loadUserNFTs();
 	}, [api, account]);
 
-	const loadUserCollections = async () => {
+	const loadUserNFTs = async () => {
 		if (!api || !account?.address) return;
 
 		setIsLoading(true);
 		try {
 			const nextCollectionId =
 				await api.query.template.nextCollectionId();
-			const userCollections: Collection[] = [];
+			const allUserNFTs: NFT[] = [];
 
-			for (let i = 0; i < nextCollectionId.toNumber(); i++) {
-				const collection = await api.query.template.collections(i);
-				if (collection.isSome) {
-					const collectionData = collection.unwrap();
-					const nfts = await loadNFTs(i);
+			for (
+				let collectionId = 0;
+				collectionId < Number(nextCollectionId.toString());
+				collectionId++
+			) {
+				const nextItemId = await api.query.template.nextItemId(
+					collectionId
+				);
 
-					if (
-						nfts.some((nft) => nft.owner === account.address)
-					) {
-						userCollections.push({
-							id: i,
-							metadata: {
-								title: String.fromCharCode(
-									...collectionData.metadata
-								),
-								description: "",
-								creator: collectionData.creator.toString(),
-							},
-							nfts: nfts.filter(
-								(nft) => nft.owner === account.address
-							),
-						});
+				for (
+					let itemId = 0;
+					itemId < Number(nextItemId.toString());
+					itemId++
+				) {
+					const nft = await api.query.template.nfts(
+						collectionId,
+						itemId
+					);
+
+					if (!nft.isEmpty) {
+						const rawData = nft.toJSON();
+						const nftData = rawData as unknown as NFTData;
+
+						if (
+							nftData.owner.toString() === account.address
+						) {
+							const metadataStr = decodeMetadata(
+								nftData.metadata
+							);
+							let metadata;
+							try {
+								metadata = JSON.parse(metadataStr);
+								console.log(metadata);
+							} catch (e) {
+								console.error(
+									"Failed to parse metadata:",
+									e
+								);
+								metadata = {
+									title: "Unknown NFT",
+									description: "Invalid metadata",
+									image: "",
+								};
+							}
+
+							allUserNFTs.push({
+								id: itemId,
+								collectionId,
+								metadata,
+								owner: nftData.owner.toString(),
+								isSold: nftData.isSold,
+							});
+						}
 					}
 				}
 			}
 
-			setCollections(userCollections);
+			setUserNFTs(allUserNFTs);
 		} catch (error) {
-			console.error("Failed to load collections:", error);
-			toast.error("Failed to load your collections");
+			console.error("Failed to load NFTs:", error);
+			toast.error("Failed to load your NFTs");
 		} finally {
 			setIsLoading(false);
 		}
-	};
-
-	const loadNFTs = async (collectionId: number): Promise<NFT[]> => {
-		const nextItemId = await api.query.template.nextItemId(collectionId);
-		const nfts: NFT[] = [];
-
-		for (let i = 0; i < nextItemId.toNumber(); i++) {
-			const nft = await api.query.template.nfts(collectionId, i);
-			if (nft.isSome) {
-				const nftData = nft.unwrap();
-				const metadata = JSON.parse(
-					String.fromCharCode(...nftData.metadata)
-				);
-				nfts.push({
-					id: i,
-					collectionId,
-					metadata,
-					owner: nftData.owner.toString(),
-					is_sold: nftData.is_sold.toJSON(),
-				});
-			}
-		}
-
-		return nfts;
 	};
 
 	if (isLoading) {
@@ -121,7 +125,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 		);
 	}
 
-	if (collections.length === 0) {
+	if (userNFTs.length === 0) {
 		return (
 			<div className="text-center py-12">
 				<h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -137,43 +141,31 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
 	return (
 		<div className="max-w-7xl mx-auto p-6">
-			<h1 className="text-3xl font-bold mb-8">Your NFT Collection</h1>
+			<h1 className="text-3xl font-bold mb-8 text-gray-900">
+				Your NFT Collection
+			</h1>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-				{collections.map((collection) => (
+				{userNFTs.map((nft) => (
 					<div
-						key={collection.id}
-						className="bg-white rounded-lg shadow-md overflow-hidden">
+						key={`${nft.collectionId}-${nft.id}`}
+						className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+						<div className="aspect-w-16 aspect-h-9 bg-gray-200">
+							{nft.metadata.image && (
+								<img
+									src={nft.metadata.image}
+									alt={`NFT ${nft.id}`}
+									className="object-cover w-full h-full"
+								/>
+							)}
+						</div>
 						<div className="p-4">
-							<h2 className="text-xl font-semibold text-gray-800 mb-2">
-								{collection.metadata.title}
-							</h2>
-							<p className="text-gray-600 text-sm mb-4">
-								{collection.metadata.description}
+							<h3 className="text-lg font-semibold text-gray-900 mb-2">
+								{`${nft.metadata.title} ${nft.isSold}` ||
+									`NFT #${nft.id}`}
+							</h3>
+							<p className="text-sm text-gray-600 mb-4">
+								Collection ID: {nft.collectionId}
 							</p>
-							<div className="grid grid-cols-2 gap-4">
-								{collection.nfts.map((nft) => (
-									<div
-										key={nft.id}
-										className="relative group">
-										<img
-											src={nft.metadata.image}
-											alt={nft.metadata.title}
-											className="w-full h-48 object-cover rounded-lg"
-										/>
-										<div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity duration-200 rounded-lg flex items-center justify-center">
-											<div className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-												<h3 className="text-sm font-medium">
-													{
-														nft
-															.metadata
-															.title
-													}
-												</h3>
-											</div>
-										</div>
-									</div>
-								))}
-							</div>
 						</div>
 					</div>
 				))}

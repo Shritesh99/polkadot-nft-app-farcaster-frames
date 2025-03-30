@@ -20,13 +20,14 @@ interface NFT {
 		image: string;
 	};
 	owner: string;
-	is_sold: boolean;
+	isSold: boolean;
 }
 
 interface NFTData {
+	collectionId: number;
 	owner: string;
 	metadata: string;
-	is_sold: boolean;
+	isSold: boolean;
 }
 
 export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
@@ -100,7 +101,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 							collectionId,
 							metadata,
 							owner: nftData.owner,
-							is_sold: nftData.is_sold,
+							isSold: nftData.isSold,
 						});
 					} catch (error) {
 						console.error(
@@ -236,37 +237,44 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 						</div>
 						<div className="p-4">
 							<h3 className="text-lg font-semibold text-gray-900 mb-2">
-								{nft.metadata.title || `NFT #${nft.id}`}
+								{`${nft.metadata.title} ${nft.isSold}` ||
+									`NFT #${nft.id}`}
 							</h3>
 							<p className="text-sm text-gray-600 mb-4">
 								Collection ID: {nft.collectionId}
 							</p>
 							<div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-								<Button
-									onClick={() =>
-										handleTransfer(
-											nft.collectionId,
-											nft.id,
-											""
-										)
-									}
-									variant="secondary"
-									size="sm"
-									className="w-full sm:w-auto">
-									Transfer
-								</Button>
-								<Button
-									onClick={() =>
-										mintNft(
-											nft.collectionId,
-											nft.id
-										)
-									}
-									variant="primary"
-									size="sm"
-									className="w-full sm:w-auto">
-									Mint
-								</Button>
+								{nft.owner === account.address && (
+									<Button
+										onClick={() =>
+											handleTransfer(
+												nft.collectionId,
+												nft.id,
+												""
+											)
+										}
+										variant="secondary"
+										size="sm"
+										className="w-full sm:w-auto">
+										Transfer
+									</Button>
+								)}
+								{!nft.isSold && (
+									<>
+										<Button
+											onClick={() =>
+												mintNft(
+													nft.collectionId,
+													nft.id
+												)
+											}
+											variant="primary"
+											size="sm"
+											className="w-full sm:w-auto">
+											Mint
+										</Button>
+									</>
+								)}
 							</div>
 						</div>
 					</div>

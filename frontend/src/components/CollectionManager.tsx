@@ -152,7 +152,6 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 						}
 
 						const nftData = rawData as unknown as NFTData;
-						console.log(nftData);
 
 						const metadataStr = decodeMetadata(
 							nftData.metadata
