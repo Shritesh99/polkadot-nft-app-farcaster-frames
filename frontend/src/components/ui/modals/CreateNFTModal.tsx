@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
-import { Button } from "./ui/Button";
+import { Button } from "../components/Button";
 
 interface CreateNFTModalProps {
 	api: ApiPromise;
@@ -26,6 +26,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [imageUrl, setImageUrl] = useState("");
+	const [price, setPrice] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -51,15 +52,15 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 				c.charCodeAt(0)
 			);
 
-			// Use the Bytes type for metadata to handle the encoding properly
-			const tx = api.tx.template.mintNft(
-				collectionId,
-				api.createType("Vec<u8>", encodedBytes)
-			);
+			// Convert price string to number
+			const priceValue = parseInt(price) || 0;
 
-			// First do a dry run to check if the encoding is correct
-			const res = await tx.dryRun(account.address, { signer });
-			console.log("Dry run result:", res.toHuman());
+			// Use the Bytes type for metadata to handle the encoding properly
+			const tx = api.tx.template.createNft(
+				collectionId,
+				api.createType("Vec<u8>", encodedBytes),
+				priceValue
+			);
 
 			// If dry run succeeds, send the actual transaction
 			await tx.signAndSend(account.address, { signer }, (result) => {
@@ -70,6 +71,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 					setTitle("");
 					setDescription("");
 					setImageUrl("");
+					setPrice("");
 					onSuccess();
 					onClose();
 				}
@@ -92,7 +94,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 				</h2>
 
 				{error && (
-					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded placeholder:text-gray-400 text-gray-700">
 						{error}
 					</div>
 				)}
@@ -106,7 +108,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 							type="text"
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-700"
 							placeholder="Enter NFT title"
 							maxLength={64}
 						/>
@@ -121,7 +123,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 							onChange={(e) =>
 								setDescription(e.target.value)
 							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-700"
 							placeholder="Enter NFT description"
 							maxLength={128}
 							rows={3}
@@ -136,28 +138,43 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 							type="text"
 							value={imageUrl}
 							onChange={(e) => setImageUrl(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-700"
 							placeholder="Enter image URL"
 							maxLength={256}
 						/>
 					</div>
 
+					<div>
+						<label className="block text-sm font-medium text-gray-700 mb-1">
+							Price
+						</label>
+						<input
+							type="number"
+							value={price}
+							onChange={(e) => setPrice(e.target.value)}
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-700"
+							placeholder="Enter price in native tokens"
+							min="0"
+						/>
+					</div>
+
 					<div className="flex space-x-4 mt-6">
+						<Button
+							onClick={onClose}
+							className="flex-1 bg-gray-600 hover:bg-gray-700 text-white mr-2">
+							Cancel
+						</Button>
 						<Button
 							onClick={createNFT}
 							disabled={
 								isLoading ||
 								!title ||
 								!description ||
-								!imageUrl
+								!imageUrl ||
+								!price
 							}
 							className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
 							{isLoading ? "Creating..." : "Create NFT"}
-						</Button>
-						<Button
-							onClick={onClose}
-							className="bg-gray-600 hover:bg-gray-700 text-white">
-							Cancel
 						</Button>
 					</div>
 				</div>

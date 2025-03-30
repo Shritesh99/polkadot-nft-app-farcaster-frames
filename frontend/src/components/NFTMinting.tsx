@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/components/Button";
 import type { Vec } from "@polkadot/types";
 import type { EventRecord } from "@polkadot/types/interfaces";
 import { u32 } from "@polkadot/types";

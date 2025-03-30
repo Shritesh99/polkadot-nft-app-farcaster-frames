@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/api/types";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/components/Button";
 import { CollectionManager } from "./CollectionManager";
 
 interface ArtistDashboardProps {

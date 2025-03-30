@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/components/Button";
 import { decodeMetadata } from "../utils/utils";
 
 interface NFTMarketplaceProps {
@@ -164,6 +164,39 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		}
 	};
 
+	const mintNft = async (collectionId: number, itemId: number) => {
+		if (!api || !account?.address || !signer) {
+			setError("Missing required properties for purchase");
+			return;
+		}
+
+		setIsLoading(true);
+		setError(null);
+
+		try {
+			const tx = api.tx.template.mintNft(collectionId, itemId);
+			await tx.signAndSend(
+				account.address,
+				{ signer },
+				({ status }) => {
+					if (status.isInBlock) {
+						console.log(
+							`NFT purchased in block ${status.asInBlock.toString()}`
+						);
+						loadNFTs(); // Refresh NFTs after purchase
+					}
+				}
+			);
+		} catch (error) {
+			console.error("Failed to buy NFT:", error);
+			setError(
+				error instanceof Error ? error.message : "Failed to buy NFT"
+			);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
 	if (isLoading && nfts.length === 0) {
 		return (
 			<div className="text-center py-8">
@@ -183,15 +216,13 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 
 	return (
 		<div className="max-w-6xl mx-auto p-6">
-			<h2 className="text-2xl font-bold text-gray-800 mb-6">
-				Available NFTs
-			</h2>
+			<h2 className="text-2xl font-bold mb-6">Available NFTs</h2>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{nfts.map((nft) => (
 					<div
 						key={`${nft.collectionId}-${nft.id}`}
-						className="bg-white rounded-lg shadow-md overflow-hidden">
+						className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
 						{nft.metadata.image && (
 							<img
 								src={nft.metadata.image}
@@ -221,16 +252,16 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 
 								<p className="text-sm text-gray-500">
 									Status:{" "}
-									{nft.is_sold
+									{!nft.is_sold
 										? "Sold"
 										: "Available"}
 								</p>
-								{nft.owner === account.address && (
+								{nft.owner === account.address ? (
 									<div className="space-y-2">
 										<input
 											type="text"
 											placeholder="Recipient address"
-											className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+											className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-gray-700"
 											id={`transfer-${nft.collectionId}-${nft.id}`}
 										/>
 										<Button
@@ -245,13 +276,29 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 													input.value
 												);
 											}}
-											disabled={isLoading}
-											className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-											{isLoading
-												? "Transferring..."
-												: "Transfer NFT"}
+											isLoading={isLoading}
+											variant="primary"
+											size="sm"
+											className="w-full">
+											Transfer NFT
 										</Button>
 									</div>
+								) : (
+									nft.is_sold && (
+										<Button
+											onClick={() =>
+												mintNft(
+													nft.collectionId,
+													nft.id
+												)
+											}
+											isLoading={isLoading}
+											variant="primary"
+											size="sm"
+											className="w-full">
+											Mint NFT
+										</Button>
+									)
 								)}
 							</div>
 						</div>

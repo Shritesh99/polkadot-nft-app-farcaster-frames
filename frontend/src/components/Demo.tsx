@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import sdk from "@farcaster/frame-sdk";
 import React from "react";
 import { useWallet } from "../contexts/WalletContext";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/components/Button";
 import type { WalletMetadata } from "@polkadot-onboard/core";
 import { ArtistDashboard } from "./ArtistDashboard";
 import { NFTMarketplace } from "./NFTMarketplace";
@@ -133,13 +133,11 @@ export default function Demo() {
 								onClick={() =>
 									setIsArtistMode(!isArtistMode)
 								}
-								className="text-sm bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md">
+								className="text-sm bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md mr-2">
 								{isArtistMode
 									? "Switch to Marketplace"
 									: "Switch to Artist Mode"}
 							</Button>
-							<div className="mb-2"></div>{" "}
-							{/* Added space between buttons */}
 							<Button
 								onClick={disconnectWallet}
 								className="text-sm bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-md">

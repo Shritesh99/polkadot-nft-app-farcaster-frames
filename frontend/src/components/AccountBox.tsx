@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/components/Button";
 import { NFTMinting } from "./NFTMinting";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";

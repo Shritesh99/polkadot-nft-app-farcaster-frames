@@ -1,6 +1,6 @@
 import React from "react";
-import { useWallet } from "../contexts/WalletContext";
-import { Button } from "./ui/Button";
+import { useWallet } from "../../../contexts/WalletContext";
+import { Button } from "./Button";
 
 export const WalletStatus: React.FC = () => {
 	const {

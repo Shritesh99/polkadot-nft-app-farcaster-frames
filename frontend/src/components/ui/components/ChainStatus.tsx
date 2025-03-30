@@ -1,5 +1,5 @@
 import React from "react";
-import { useChain } from "../contexts/ChainContext";
+import { useChain } from "../../../contexts/ChainContext";
 
 export const ChainStatus: React.FC = () => {
 	const { api, isConnecting, error } = useChain();

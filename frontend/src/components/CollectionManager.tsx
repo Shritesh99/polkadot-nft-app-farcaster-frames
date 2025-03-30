@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
-import { Button } from "./ui/Button";
+import { Button } from "./ui/components/Button";
 import { decodeMetadata } from "../utils/utils";
-import { CreateCollectionModal } from "./CreateCollectionModal";
-import { CreateNFTModal } from "./CreateNFTModal";
+import { CreateCollectionModal } from "./ui/modals/CreateCollectionModal";
+import { CreateNFTModal } from "./ui/modals/CreateNFTModal";
 
 interface CollectionManagerProps {
 	api: ApiPromise;
@@ -152,6 +152,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 						}
 
 						const nftData = rawData as unknown as NFTData;
+						console.log(nftData);
 
 						const metadataStr = decodeMetadata(
 							nftData.metadata
@@ -305,23 +306,21 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 
 				{/* NFTs in Selected Collection */}
 				<div className="bg-white rounded-lg shadow-lg p-6">
-					<h2 className="text-2xl font-bold text-gray-800 mb-6">
-						{selectedCollection
-							? `NFTs in ${selectedCollection.metadata.title}`
-							: "Select a Collection"}
-					</h2>
+					<div className="flex justify-between mb-4">
+						<h2 className="text-2xl font-bold text-gray-800 mb-6">
+							{selectedCollection
+								? `NFTs in ${selectedCollection.metadata.title}`
+								: "Select a Collection"}
+						</h2>
+
+						<Button
+							onClick={() => setIsCreateNFTModalOpen(true)}
+							className="bg-blue-600 hover:bg-blue-700 text-white transition duration-300">
+							Create NFT
+						</Button>
+					</div>
 					{selectedCollection !== null && (
 						<>
-							<div className="flex justify-end mb-4">
-								<Button
-									onClick={() =>
-										setIsCreateNFTModalOpen(true)
-									}
-									className="bg-blue-600 hover:bg-blue-700 text-white transition duration-300">
-									Create NFT
-								</Button>
-							</div>
-
 							<div className="space-y-4">
 								{nfts.length === 0 ? (
 									<div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -387,7 +386,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 													</p>
 													<p className="text-xs text-gray-500">
 														Status:{" "}
-														{nft.is_sold
+														{!nft.is_sold
 															? "Sold"
 															: "Available"}
 													</p>

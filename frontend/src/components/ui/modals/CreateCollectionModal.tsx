@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
-import { Button } from "./ui/Button";
+import { Button } from "../components/Button";
 
 interface CreateCollectionModalProps {
 	api: ApiPromise;
@@ -23,8 +23,6 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 }) => {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
-	const [image, setImage] = useState("");
-	const [price, setPrice] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -41,8 +39,6 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 			const metadata = {
 				title,
 				description,
-				image,
-				price,
 				creator: account.address,
 			};
 			const metadataString = JSON.stringify(metadata);
@@ -61,8 +57,6 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 						);
 						setTitle("");
 						setDescription("");
-						setImage("");
-						setPrice("");
 						onSuccess();
 						onClose();
 					}
@@ -100,7 +94,7 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 							type="text"
 							value={title}
 							onChange={(e) => setTitle(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-700"
 							placeholder="Enter collection title"
 							maxLength={64}
 						/>
@@ -115,41 +109,18 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 							onChange={(e) =>
 								setDescription(e.target.value)
 							}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-400 text-gray-700"
 							placeholder="Enter collection description"
 							maxLength={128}
 							rows={3}
 						/>
 					</div>
-
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Image URL
-						</label>
-						<input
-							type="text"
-							value={image}
-							onChange={(e) => setImage(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-							placeholder="Enter image URL"
-							maxLength={256}
-						/>
-					</div>
-
-					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-1">
-							Price
-						</label>
-						<input
-							type="text"
-							value={price}
-							onChange={(e) => setPrice(e.target.value)}
-							className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-							placeholder="Enter price"
-						/>
-					</div>
-
 					<div className="flex space-x-4 mt-6">
+						<Button
+							onClick={onClose}
+							className="flex-1 bg-gray-600 hover:bg-gray-700 text-white mr-2">
+							Cancel
+						</Button>
 						<Button
 							onClick={createCollection}
 							disabled={
@@ -159,11 +130,6 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 							{isLoading
 								? "Creating..."
 								: "Create Collection"}
-						</Button>
-						<Button
-							onClick={onClose}
-							className="bg-gray-600 hover:bg-gray-700 text-white">
-							Cancel
 						</Button>
 					</div>
 				</div>

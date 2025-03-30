@@ -16,21 +16,23 @@ pub use weights::*;
 pub mod pallet {
     use super::*;
     use frame_support::pallet_prelude::*;
+    use frame_support::sp_runtime::traits::AccountIdConversion;
+    use frame_support::traits::Currency;
     use frame_system::pallet_prelude::*;
     use sp_std::vec::Vec;
 
     #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, Default, TypeInfo, MaxEncodedLen)]
-    pub struct NFT<AccountId> {
+    pub struct NFT<AccountId, Balance> {
         pub owner: AccountId,
         pub metadata: BoundedVec<u8, ConstU32<256>>,
         pub is_sold: bool,
+        pub price: Balance,
     }
 
     #[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, Default, TypeInfo, MaxEncodedLen)]
     pub struct Collection<AccountId> {
         pub creator: AccountId,
         pub metadata: BoundedVec<u8, ConstU32<256>>,
-        pub is_frozen: bool, // Prevents further modifications
         pub nfts: BoundedVec<ItemId, ConstU32<256>>, // List of NFT IDs in the collection
     }
 
@@ -44,6 +46,8 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         type WeightInfo: WeightInfo;
+        type Currency: Currency<Self::AccountId>;
+        type PalletId: Get<frame_support::PalletId>;
     }
 
     #[pallet::storage]
@@ -63,7 +67,7 @@ pub mod pallet {
         CollectionId,
         Blake2_128Concat,
         ItemId,
-        NFT<T::AccountId>,
+        NFT<T::AccountId, <T::Currency as Currency<T::AccountId>>::Balance>,
         OptionQuery,
     >;
 
@@ -101,6 +105,7 @@ pub mod pallet {
         NotCollectionOwner,
         NFTAlreadySold,
         MetadataInvalid,
+        PriceNotSet,
     }
 
     #[pallet::call]
@@ -116,6 +121,17 @@ pub mod pallet {
                 Error::<T>::AlreadyRegistered
             );
 
+            // Define the registration fee
+            let registration_fee = T::Currency::minimum_balance() * 100u32.into();
+
+            // Ensure the artist has enough balance to pay the fee
+            T::Currency::transfer(
+                &who,
+                &T::PalletId::get().into_account_truncating(),
+                registration_fee,
+                frame_support::traits::ExistenceRequirement::KeepAlive,
+            )?;
+
             Artists::<T>::insert(&who, true);
             Self::deposit_event(Event::ArtistRegistered(who));
 
@@ -128,7 +144,6 @@ pub mod pallet {
         pub fn create_collection(origin: OriginFor<T>, metadata: Vec<u8>) -> DispatchResult {
             let creator = ensure_signed(origin)?;
 
-            // Ensure creator is a registered artist
             ensure!(Artists::<T>::get(&creator), Error::<T>::NotRegisteredArtist);
 
             let bounded_metadata: BoundedVec<u8, ConstU32<256>> = metadata
@@ -140,8 +155,7 @@ pub mod pallet {
             let collection = Collection {
                 creator: creator.clone(),
                 metadata: bounded_metadata,
-                is_frozen: false,
-                nfts: BoundedVec::new(), // Initialize empty list of NFT IDs
+                nfts: BoundedVec::new(),
             };
 
             Collections::<T>::insert(collection_id, collection);
@@ -151,56 +165,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Update collection metadata (creator only)
-        #[pallet::call_index(2)]
-        #[pallet::weight(Weight::default())]
-        pub fn update_collection(
-            origin: OriginFor<T>,
-            collection_id: CollectionId,
-            metadata: Vec<u8>,
-        ) -> DispatchResult {
-            let who = ensure_signed(origin)?;
-
-            Collections::<T>::try_mutate(collection_id, |collection_option| -> DispatchResult {
-                let collection = collection_option
-                    .as_mut()
-                    .ok_or(Error::<T>::CollectionNotFound)?;
-                ensure!(!collection.is_frozen, Error::<T>::CollectionFrozen);
-                ensure!(collection.creator == who, Error::<T>::NotCollectionOwner);
-
-                collection.metadata = metadata
-                    .try_into()
-                    .map_err(|_| Error::<T>::MetadataInvalid)?;
-                Ok(())
-            })?;
-
-            Self::deposit_event(Event::CollectionUpdated(collection_id));
-            Ok(())
-        }
-
-        /// Freeze collection to prevent further modifications (creator only)
-        #[pallet::call_index(3)]
-        #[pallet::weight(Weight::default())]
-        pub fn freeze_collection(
-            origin: OriginFor<T>,
-            collection_id: CollectionId,
-        ) -> DispatchResult {
-            let who = ensure_signed(origin)?;
-
-            Collections::<T>::try_mutate(collection_id, |collection_option| -> DispatchResult {
-                let collection = collection_option
-                    .as_mut()
-                    .ok_or(Error::<T>::CollectionNotFound)?;
-                ensure!(collection.creator == who, Error::<T>::NotCollectionOwner);
-                collection.is_frozen = true;
-                Ok(())
-            })?;
-
-            Self::deposit_event(Event::CollectionFrozen(collection_id));
-            Ok(())
-        }
-
-        /// Delete collection (creator only, if not frozen)
+        /// Delete collection (creator only)
         #[pallet::call_index(4)]
         #[pallet::weight(Weight::default())]
         pub fn delete_collection(
@@ -212,73 +177,20 @@ pub mod pallet {
             let collection =
                 Collections::<T>::get(collection_id).ok_or(Error::<T>::CollectionNotFound)?;
             ensure!(collection.creator == who, Error::<T>::NotCollectionOwner);
-            ensure!(!collection.is_frozen, Error::<T>::CollectionFrozen);
 
             Collections::<T>::remove(collection_id);
             Self::deposit_event(Event::CollectionDeleted(collection_id));
             Ok(())
         }
 
-        /// Mint multiple NFTs in a collection
-        #[pallet::call_index(5)]
-        #[pallet::weight(Weight::default())]
-        pub fn batch_mint_nft(
-            origin: OriginFor<T>,
-            collection_id: CollectionId,
-            metadata_list: Vec<Vec<u8>>,
-        ) -> DispatchResult {
-            let sender = ensure_signed(origin)?;
-
-            ensure!(
-                Collections::<T>::contains_key(collection_id),
-                Error::<T>::CollectionNotFound
-            );
-
-            let mut minted_ids = Vec::new();
-            for metadata in metadata_list {
-                let bounded_metadata: BoundedVec<u8, ConstU32<256>> = metadata
-                    .try_into()
-                    .map_err(|_| Error::<T>::MetadataInvalid)?;
-
-                let item_id = NextItemId::<T>::get(collection_id);
-                let nft = NFT {
-                    owner: sender.clone(),
-                    metadata: bounded_metadata,
-                    is_sold: false,
-                };
-
-                Nfts::<T>::insert(collection_id, item_id, nft);
-
-                // Add the NFT ID to the collection
-                Collections::<T>::try_mutate(
-                    collection_id,
-                    |collection_option| -> DispatchResult {
-                        let collection = collection_option
-                            .as_mut()
-                            .ok_or(Error::<T>::CollectionNotFound)?;
-                        collection
-                            .nfts
-                            .try_push(item_id)
-                            .map_err(|_| Error::<T>::CollectionNotFound)?;
-                        Ok(())
-                    },
-                )?;
-
-                NextItemId::<T>::insert(collection_id, item_id.saturating_add(1));
-                minted_ids.push(item_id);
-            }
-
-            Self::deposit_event(Event::NFTBatchMinted(collection_id, minted_ids, sender));
-            Ok(())
-        }
-
         /// Mint a single NFT
         #[pallet::call_index(6)]
         #[pallet::weight(Weight::default())]
-        pub fn mint_nft(
+        pub fn create_nft(
             origin: OriginFor<T>,
             collection_id: CollectionId,
             metadata: Vec<u8>,
+            price: <T::Currency as Currency<T::AccountId>>::Balance,
         ) -> DispatchResult {
             let sender = ensure_signed(origin)?;
             ensure!(
@@ -289,13 +201,13 @@ pub mod pallet {
                 .try_into()
                 .map_err(|_| Error::<T>::MetadataInvalid)?;
 
-            // Get the current item_id or initialize to 0 if it doesn't exist
             let item_id = NextItemId::<T>::get(collection_id);
 
             let nft = NFT {
                 owner: sender.clone(),
                 metadata: bounded_metadata,
                 is_sold: false,
+                price,
             };
 
             // Insert the NFT into storage
@@ -379,6 +291,42 @@ pub mod pallet {
             })?;
 
             Self::deposit_event(Event::NFTBurned(collection_id, item_id, sender));
+            Ok(())
+        }
+
+        /// Buy an NFT from its owner
+        #[pallet::call_index(9)]
+        #[pallet::weight(Weight::default())]
+        pub fn mint_nft(
+            origin: OriginFor<T>,
+            collection_id: CollectionId,
+            item_id: ItemId,
+        ) -> DispatchResult {
+            let buyer = ensure_signed(origin)?;
+
+            // Check if the NFT exists and is not already sold
+            let nft = Nfts::<T>::get(collection_id, item_id).ok_or(Error::<T>::NFTNotFound)?;
+            ensure!(!nft.is_sold, Error::<T>::NFTAlreadySold);
+            ensure!(nft.owner != buyer, Error::<T>::NotNFTOwner);
+
+            // Ensure the buyer has enough balance
+            let seller = nft.owner.clone();
+            T::Currency::transfer(
+                &buyer,
+                &seller,
+                nft.price,
+                frame_support::traits::ExistenceRequirement::KeepAlive,
+            )?;
+
+            // Transfer ownership to the buyer
+            Nfts::<T>::try_mutate(collection_id, item_id, |nft_option| -> DispatchResult {
+                let nft = nft_option.as_mut().ok_or(Error::<T>::NFTNotFound)?;
+                nft.owner = buyer.clone();
+                nft.is_sold = true;
+                Ok(())
+            })?;
+
+            Self::deposit_event(Event::NFTTransferred(collection_id, item_id, seller, buyer));
             Ok(())
         }
     }
