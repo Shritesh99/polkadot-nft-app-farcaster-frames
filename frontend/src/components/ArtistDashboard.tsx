@@ -72,11 +72,11 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 
 	if (!isRegistered) {
 		return (
-			<div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
-				<h2 className="text-2xl font-bold text-gray-800 mb-6">
+			<div className="max-w-2xl mx-auto p-4 sm:p-6 bg-white rounded-lg shadow-md">
+				<h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">
 					Register as Artist
 				</h2>
-				<p className="text-gray-600 mb-4">
+				<p className="text-sm sm:text-base text-gray-600 mb-4">
 					Register as an artist to create and manage your NFT
 					collections.
 				</p>
@@ -91,8 +91,10 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 	}
 
 	return (
-		<div className="max-w-6xl mx-auto p-6">
-			<h1 className="text-3xl font-bold mb-8">Artist Dashboard</h1>
+		<div className="max-w-6xl mx-auto p-4 sm:p-6">
+			<h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900">
+				Artist Dashboard
+			</h1>
 			<CollectionManager api={api} account={account} signer={signer} />
 		</div>
 	);

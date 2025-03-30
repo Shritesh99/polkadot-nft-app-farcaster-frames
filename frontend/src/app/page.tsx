@@ -25,13 +25,13 @@ export default function Home() {
 			<div className="max-w-7xl mx-auto">
 				<nav className="bg-white shadow-sm">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-						<div className="flex justify-between h-16">
-							<div className="flex items-center">
+						<div className="flex flex-col sm:flex-row justify-between h-auto sm:h-16 py-4 sm:py-0">
+							<div className="flex items-center mb-4 sm:mb-0">
 								<h1 className="text-xl font-bold text-gray-900">
 									NFT Marketplace
 								</h1>
 							</div>
-							<div className="flex items-center space-x-4">
+							<div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
 								<ChainStatus />
 								{selectedAccount ? (
 									<div className="text-sm text-gray-700">
@@ -56,7 +56,8 @@ export default function Home() {
 											)
 										}
 										variant="primary"
-										size="sm">
+										size="sm"
+										className="w-full sm:w-auto">
 										Connect Wallet
 									</Button>
 								)}
@@ -64,7 +65,7 @@ export default function Home() {
 						</div>
 					</div>
 				</nav>
-				<div className="py-6">
+				<div className="py-4 sm:py-6">
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 						<Demo
 							setConnectModalOpen={setIsConnectModalOpen}

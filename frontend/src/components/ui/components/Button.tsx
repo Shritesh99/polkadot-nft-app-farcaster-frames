@@ -3,28 +3,19 @@ import React from "react";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 	children: React.ReactNode;
 	isLoading?: boolean;
-	variant?: "primary" | "secondary" | "danger";
+	variant?: "primary" | "secondary" | "outline";
 	size?: "sm" | "md" | "lg";
 }
 
-export function Button({
+export const Button: React.FC<ButtonProps> = ({
 	children,
-	className = "",
-	isLoading = false,
 	variant = "primary",
 	size = "md",
-	disabled,
+	className = "",
 	...props
-}: ButtonProps) {
+}) => {
 	const baseStyles =
-		"inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
-
-	const variantStyles = {
-		primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-		secondary:
-			"bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500",
-		danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-	};
+		"inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
 
 	const sizeStyles = {
 		sm: "px-3 py-1.5 text-sm",
@@ -32,19 +23,18 @@ export function Button({
 		lg: "px-6 py-3 text-lg",
 	};
 
+	const variantStyles = {
+		primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+		secondary:
+			"bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500",
+		outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
+	};
+
 	return (
 		<button
-			className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
-			disabled={disabled || isLoading}
+			className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
 			{...props}>
-			{isLoading ? (
-				<div className="flex items-center">
-					<div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-					<span>Loading...</span>
-				</div>
-			) : (
-				children
-			)}
+			{children}
 		</button>
 	);
-}
+};

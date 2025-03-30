@@ -249,34 +249,34 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 	};
 
 	return (
-		<div className="max-w-6xl mx-auto p-6">
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+		<div className="max-w-6xl mx-auto p-4 sm:p-6">
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
 				{/* Collections List */}
-				<div className="bg-white rounded-lg shadow-lg p-6">
-					<div className="flex justify-between items-center mb-6">
-						<h2 className="text-2xl font-bold text-gray-800">
+				<div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
+						<h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
 							My Collections
 						</h2>
 						<Button
 							onClick={() =>
 								setIsCreateCollectionModalOpen(true)
 							}
-							className="bg-blue-600 hover:bg-blue-700 text-white transition duration-300">
+							className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white transition duration-300">
 							Create Collection
 						</Button>
 					</div>
 
 					{error && (
-						<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+						<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
 							{error}
 						</div>
 					)}
 
-					<div className="space-y-4">
+					<div className="space-y-3 sm:space-y-4">
 						{collections.map((collection) => (
 							<div
 								key={collection.id}
-								className={`p-4 border rounded-lg cursor-pointer transition-colors duration-300 ${
+								className={`p-3 sm:p-4 border rounded-lg cursor-pointer transition-colors duration-300 ${
 									selectedCollection?.id ===
 									collection.id
 										? "bg-blue-50 border-blue-300"
@@ -285,15 +285,14 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 								onClick={() =>
 									setSelectedCollection(collection)
 								}>
-								<h3 className="text-lg font-semibold text-gray-800">
+								<h3 className="text-base sm:text-lg font-semibold text-gray-800">
 									{collection.metadata.title}
 								</h3>
-								<p className="text-gray-600 mt-1">
+								<p className="text-sm text-gray-600 mt-1 line-clamp-2">
 									{collection.metadata.description}
 								</p>
-
 								<div className="mt-2 flex justify-between items-center">
-									<span className="text-sm text-gray-500">
+									<span className="text-xs sm:text-sm text-gray-500">
 										Collection #{collection.id} (
 										{collection.nfts?.length || 0}{" "}
 										NFTs)
@@ -305,26 +304,30 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				</div>
 
 				{/* NFTs in Selected Collection */}
-				<div className="bg-white rounded-lg shadow-lg p-6">
-					<div className="flex justify-between mb-4">
-						<h2 className="text-2xl font-bold text-gray-800 mb-6">
+				<div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
+						<h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
 							{selectedCollection
 								? `NFTs in ${selectedCollection.metadata.title}`
 								: "Select a Collection"}
 						</h2>
-
-						<Button
-							onClick={() => setIsCreateNFTModalOpen(true)}
-							className="bg-blue-600 hover:bg-blue-700 text-white transition duration-300">
-							Create NFT
-						</Button>
+						{selectedCollection && (
+							<Button
+								onClick={() =>
+									setIsCreateNFTModalOpen(true)
+								}
+								className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white transition duration-300">
+								Create NFT
+							</Button>
+						)}
 					</div>
+
 					{selectedCollection !== null && (
 						<>
-							<div className="space-y-4">
+							<div className="space-y-3 sm:space-y-4">
 								{nfts.length === 0 ? (
 									<div className="text-center p-4 bg-gray-50 rounded-lg">
-										<p className="text-gray-500">
+										<p className="text-sm text-gray-500">
 											No NFTs in this
 											collection yet
 										</p>
@@ -333,16 +336,16 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 									nfts.map((nft) => (
 										<div
 											key={nft.id}
-											className="p-4 border rounded-lg shadow-sm transition duration-300 hover:shadow-md">
-											<div className="flex justify-between items-start">
-												<div>
-													<h3 className="font-semibold text-black">
+											className="p-3 sm:p-4 border rounded-lg shadow-sm transition duration-300 hover:shadow-md">
+											<div className="flex flex-col sm:flex-row gap-4">
+												<div className="flex-1">
+													<h3 className="font-semibold text-black text-base sm:text-lg">
 														{nft
 															.metadata
 															.title ||
 															`NFT #${nft.id}`}
 													</h3>
-													<p className="text-sm text-gray-600">
+													<p className="text-sm text-gray-600 mt-1 line-clamp-2">
 														{
 															nft
 																.metadata
@@ -363,35 +366,30 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 																	.title ||
 																`NFT #${nft.id}`
 															}
-															width={
-																0
-															}
-															height={
-																0
-															}
-															sizes="100vw"
-															className="mt-2 w-24 h-24 object-cover rounded-lg shadow"
+															className="mt-2 w-full sm:w-24 h-24 object-cover rounded-lg shadow"
 														/>
 													)}
-													<p className="text-xs text-gray-500 mt-2">
-														Owner:{" "}
-														{nft.owner.slice(
-															0,
-															6
-														)}
-														...
-														{nft.owner.slice(
-															-4
-														)}
-													</p>
-													<p className="text-xs text-gray-500">
-														Status:{" "}
-														{!nft.is_sold
-															? "Sold"
-															: "Available"}
-													</p>
+													<div className="mt-2 space-y-1">
+														<p className="text-xs text-gray-500">
+															Owner:{" "}
+															{nft.owner.slice(
+																0,
+																6
+															)}
+															...
+															{nft.owner.slice(
+																-4
+															)}
+														</p>
+														<p className="text-xs text-gray-500">
+															Status:{" "}
+															{!nft.is_sold
+																? "Sold"
+																: "Available"}
+														</p>
+													</div>
 												</div>
-												<div className="space-y-2">
+												<div className="flex flex-col gap-2">
 													{nft.owner ===
 													account.address ? (
 														<>
@@ -401,7 +399,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 																className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
 																id={`transfer-${nft.id}`}
 															/>
-															<div className="flex space-x-2">
+															<div className="flex flex-col sm:flex-row gap-2">
 																<Button
 																	onClick={() => {
 																		const input =

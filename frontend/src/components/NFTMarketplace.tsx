@@ -215,84 +215,58 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 	}
 
 	return (
-		<div className="max-w-6xl mx-auto p-6">
-			<h2 className="text-2xl font-bold mb-6">Available NFTs</h2>
+		<div className="max-w-6xl mx-auto p-4 sm:p-6">
+			<h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">
+				Available NFTs
+			</h2>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 				{nfts.map((nft) => (
 					<div
 						key={`${nft.collectionId}-${nft.id}`}
 						className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-						{nft.metadata.image && (
-							<img
-								src={nft.metadata.image}
-								alt={
-									nft.metadata.title ||
-									`NFT #${nft.id}`
-								}
-								className="w-full h-48 object-cover"
-							/>
-						)}
+						<div className="aspect-w-16 aspect-h-9 bg-gray-200">
+							{nft.metadata.image && (
+								<img
+									src={nft.metadata.image}
+									alt={`NFT ${nft.id}`}
+									className="object-cover w-full h-full"
+								/>
+							)}
+						</div>
 						<div className="p-4">
-							<h3 className="text-xl font-semibold text-gray-800">
+							<h3 className="text-lg font-semibold text-gray-900 mb-2">
 								{nft.metadata.title || `NFT #${nft.id}`}
 							</h3>
-							<p className="text-gray-600 mt-2">
-								{nft.metadata.description}
+							<p className="text-sm text-gray-600 mb-4">
+								Collection ID: {nft.collectionId}
 							</p>
-							<div className="mt-4 space-y-2">
-								<p className="text-sm text-gray-500">
-									Collection #{nft.collectionId} |
-									NFT #{nft.id}
-								</p>
-								<p className="text-sm text-gray-500">
-									Owner: {nft.owner.slice(0, 6)}...
-									{nft.owner.slice(-4)}
-								</p>
-								{nft.owner === account.address ? (
-									<div className="space-y-2">
-										<input
-											type="text"
-											placeholder="Recipient address"
-											className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-400 text-gray-700"
-											id={`transfer-${nft.collectionId}-${nft.id}`}
-										/>
-										<Button
-											onClick={() => {
-												const input =
-													document.getElementById(
-														`transfer-${nft.collectionId}-${nft.id}`
-													) as HTMLInputElement;
-												handleTransfer(
-													nft.collectionId,
-													nft.id,
-													input.value
-												);
-											}}
-											isLoading={isLoading}
-											variant="primary"
-											size="sm"
-											className="w-full">
-											Transfer NFT
-										</Button>
-									</div>
-								) : (
-									nft.is_sold && (
-										<Button
-											onClick={() =>
-												mintNft(
-													nft.collectionId,
-													nft.id
-												)
-											}
-											isLoading={isLoading}
-											variant="primary"
-											size="sm"
-											className="w-full">
-											Mint NFT
-										</Button>
-									)
-								)}
+							<div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+								<Button
+									onClick={() =>
+										handleTransfer(
+											nft.collectionId,
+											nft.id,
+											""
+										)
+									}
+									variant="secondary"
+									size="sm"
+									className="w-full sm:w-auto">
+									Transfer
+								</Button>
+								<Button
+									onClick={() =>
+										mintNft(
+											nft.collectionId,
+											nft.id
+										)
+									}
+									variant="primary"
+									size="sm"
+									className="w-full sm:w-auto">
+									Mint
+								</Button>
 							</div>
 						</div>
 					</div>
