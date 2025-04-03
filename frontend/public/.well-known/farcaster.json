@@ -1,0 +1,18 @@
+{
+	"accountAssociation": {
+		"header": "eyJmaWQiOjQwMDcxMywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDFkNDAxYTUyMzcxOWM1OGFhN2JhYTIzYjYxNTg3YzEyMGJkZDgxY2YifQ",
+		"payload": "eyJkb21haW4iOiJsb2NhbGhvc3Q6MzAwMCJ9",
+		"signature": ""
+	},
+	"frame": {
+		"name": "Polkadot NFT Demo",
+		"version": "1",
+		"iconUrl": "http://localhost:3000/icon.png",
+		"homeUrl": "http://localhost:3000",
+		"imageUrl": "http://localhost:3000/image.png",
+		"buttonTitle": "Polkadot NFT",
+		"splashImageUrl": "http://localhost:3000/splash.png",
+		"splashBackgroundColor": "#000",
+		"webhookUrl": "http://localhost:3000/api/webhook"
+	}
+}

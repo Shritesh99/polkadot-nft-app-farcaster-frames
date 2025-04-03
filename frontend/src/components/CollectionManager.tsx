@@ -28,7 +28,7 @@ interface Collection {
 interface NFTData {
 	owner: string;
 	metadata: string;
-	is_sold: boolean;
+	isSold: boolean;
 }
 
 interface CollectionData {
@@ -47,7 +47,7 @@ interface NFT {
 		image: string;
 	};
 	owner: string;
-	is_sold: boolean;
+	isSold: boolean;
 }
 
 export const CollectionManager: React.FC<CollectionManagerProps> = ({
@@ -169,7 +169,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 							id: itemId,
 							metadata,
 							owner: nftData.owner,
-							is_sold: nftData.is_sold,
+							isSold: nftData.isSold,
 						};
 					} catch (error) {
 						console.error(
@@ -382,7 +382,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 														</p>
 														<p className="text-xs text-gray-500">
 															Status:{" "}
-															{!nft.is_sold
+															{!nft.isSold
 																? "Sold"
 																: "Available"}
 														</p>

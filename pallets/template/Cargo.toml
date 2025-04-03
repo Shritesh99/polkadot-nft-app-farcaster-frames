@@ -1,6 +1,6 @@
 [package]
-name = "pallet-template"
-description = "FRAME pallet template for defining custom runtime logic."
+name = "pallet-nft-farcaster-frames"
+description = "FRAME pallet for farcaster frames for defining custom runtime logic."
 version = "0.1.0"
 license = "Unlicense"
 authors.workspace = true
@@ -23,7 +23,6 @@ frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
 sp-std = { default-features = false, workspace = true }
-pallet-farcaster_frame = { default-features = false, workspace = true}
 log = '^0.4.14'
 
 [dev-dependencies]

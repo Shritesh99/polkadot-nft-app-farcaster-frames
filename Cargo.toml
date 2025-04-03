@@ -14,8 +14,8 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-solochain-template-runtime = { path = "./runtime", default-features = false }
-pallet-template = { path = "./pallets/template", default-features = false }
+solochain-template-runtime = { path = "./runtime", default-features = false, package="Polkadot-NFT-Farcaster-Frames-Runtime" }
+pallet-template = { path = "./pallets/template", default-features = false, package="pallet-nft-farcaster-frames" }
 clap = { version = "4.5.13" }
 frame-benchmarking-cli = { version = "46.0.0", default-features = false }
 frame-metadata-hash-extension = { version = "0.7.0", default-features = false }
@@ -73,4 +73,3 @@ sp-transaction-pool = { version = "35.0.0", default-features = false }
 sp-version = { version = "38.0.0", default-features = false }
 substrate-wasm-builder = { version = "25.0.0", default-features = false }
 sp-std = { version = "14.0.0", default-features = false }
-pallet-farcaster_frame = { version = "0.0.5", default-features = false}

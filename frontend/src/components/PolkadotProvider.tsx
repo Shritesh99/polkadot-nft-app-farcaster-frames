@@ -72,7 +72,7 @@ export default function Provider({ children }: { children: React.ReactNode }) {
 	);
 	const walletAggregator = new WalletAggregator([
 		injectedWalletProvider,
-		// walletConnectProvider,
+		walletConnectProvider,
 	]);
 
 	return (

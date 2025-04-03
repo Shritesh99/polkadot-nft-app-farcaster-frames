@@ -209,7 +209,7 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 					{accounts.length !== 0 && (
 						<Button
 							onClick={handleAccountSelect}
-							isLoading={isConnecting}
+							isloading={isConnecting ? true : undefined}
 							disabled={
 								!selectedAccountAddress || isConnecting
 							}

@@ -237,7 +237,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 						</div>
 						<div className="p-4">
 							<h3 className="text-lg font-semibold text-gray-900 mb-2">
-								{`${nft.metadata.title} ${nft.isSold}` ||
+								{`${nft.metadata.title}` ||
 									`NFT #${nft.id}`}
 							</h3>
 							<p className="text-sm text-gray-600 mb-4">
