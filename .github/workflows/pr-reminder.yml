@@ -20,5 +20,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Hello, this is an automatic reminder that any code changes should be made to [the source](https://github.com/paritytech/polkadot-sdk/tree/master/templates/solochain).'
+              body: 'Hello, this is an automatic reminder that any code changes should be made to [the source](https://github.com/paritytech/polkadot-sdk/tree/master/templates/parachain).'
             })

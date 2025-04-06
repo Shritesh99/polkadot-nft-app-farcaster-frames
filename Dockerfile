@@ -1,28 +1,27 @@
-FROM docker.io/paritytech/ci-unified:latest as builder
+FROM rust:1.76-bookworm AS builder
 
 WORKDIR /polkadot
+
+RUN echo "Acquire::http::Pipeline-Depth 0;" > /etc/apt/apt.conf.d/99custom && \
+    echo "Acquire::http::No-Cache true;" >> /etc/apt/apt.conf.d/99custom && \
+    echo "Acquire::BrokenProxy    true;" >> /etc/apt/apt.conf.d/99custom && \
+    echo 'Acquire::Retries "3";' >> /etc/apt/apt.conf.d/99custom && \
+    echo 'Acquire::http::Timeout "240";' >> /etc/apt/apt.conf.d/99custom
+
+# Install additional build dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    clang \
+    cmake \
+    librocksdb-dev \
+    protobuf-compiler \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add WASM target and Rust source code
+RUN rustup target add wasm32-unknown-unknown && \
+    rustup component add rust-src
+
 COPY . /polkadot
 
-RUN cargo fetch
+# Build with vendored dependencies and WASM support
 RUN cargo build --locked --release
-
-FROM docker.io/parity/base-bin:latest
-
-COPY --from=builder /polkadot/target/release/solochain-template-node /usr/local/bin
-
-USER root
-RUN useradd -m -u 1001 -U -s /bin/sh -d /polkadot polkadot && \
-	mkdir -p /data /polkadot/.local/share && \
-	chown -R polkadot:polkadot /data && \
-	ln -s /data /polkadot/.local/share/polkadot && \
-# unclutter and minimize the attack surface
-	rm -rf /usr/bin /usr/sbin && \
-# check if executable works in this container
-	/usr/local/bin/solochain-template-node --version
-
-USER polkadot
-
-EXPOSE 30333 9933 9944 9615
-VOLUME ["/data"]
-
-ENTRYPOINT ["/usr/local/bin/solochain-template-node"]

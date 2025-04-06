@@ -24,11 +24,13 @@
 // For more information, please refer to <http://unlicense.org>
 
 frame_benchmarking::define_benchmarks!(
-	[frame_benchmarking, BaselineBench::<Runtime>]
 	[frame_system, SystemBench::<Runtime>]
-	[frame_system_extensions, SystemExtensionsBench::<Runtime>]
 	[pallet_balances, Balances]
+	[pallet_session, SessionBench::<Runtime>]
 	[pallet_timestamp, Timestamp]
+	[pallet_message_queue, MessageQueue]
 	[pallet_sudo, Sudo]
-	[pallet_template, Template]
+	[pallet_collator_selection, CollatorSelection]
+	[cumulus_pallet_parachain_system, ParachainSystem]
+	[cumulus_pallet_xcmp_queue, XcmpQueue]
 );

@@ -1,0 +1,23 @@
+FROM docker.io/parity/base-bin:latest
+
+COPY --from=shritesh99/polkadot-node:builder /polkadot/target/release/parachain-template-node /usr/local/bin/
+
+# Switch to root for system operations
+USER root
+
+# Create user and group with explicit UID/GID
+RUN groupadd -r -g 1001 polkadot && \
+    useradd -r -u 1001 -g polkadot -d /home/polkadot -m polkadot && \
+    mkdir -p /data && \
+    chown -R polkadot:polkadot /data && \
+    chmod 755 /usr/local/bin/parachain-template-node && \
+    ln -s /usr/local/bin/parachain-template-node /usr/local/bin/polkadot-node-template
+
+COPY ./chain-spec ./chain-spec
+# Switch back to non-root user
+USER polkadot
+
+EXPOSE 30333 30334 9933 9944 9615
+VOLUME ["/data"]
+
+ENTRYPOINT ["parachain-template-node"]
