@@ -27,7 +27,7 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 		if (!api || !account?.address) return;
 
 		try {
-			const isArtist = await api.query.template.artists(
+			const isArtist = await api.query.templatePallet.artists(
 				account.address
 			);
 			setIsRegistered(Boolean(isArtist.toJSON()));
@@ -44,7 +44,7 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 		setIsLoading(true);
 
 		try {
-			const tx = api.tx.template.registerArtist();
+			const tx = api.tx.templatePallet.registerArtist();
 
 			await tx.signAndSend(
 				account.address,

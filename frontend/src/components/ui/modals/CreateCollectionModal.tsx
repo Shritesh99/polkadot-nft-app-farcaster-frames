@@ -45,7 +45,7 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 			const metadataBytes = Array.from(metadataString).map((c) =>
 				c.charCodeAt(0)
 			);
-			const tx = api.tx.template.createCollection(metadataBytes);
+			const tx = api.tx.templatePallet.createCollection(metadataBytes);
 
 			await tx.signAndSend(
 				account.address,

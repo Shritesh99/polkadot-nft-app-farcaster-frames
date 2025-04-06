@@ -48,7 +48,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 		setIsLoading(true);
 		try {
 			const nextCollectionId =
-				await api.query.template.nextCollectionId();
+				await api.query.templatePallet.nextCollectionId();
 			const allUserNFTs: NFT[] = [];
 
 			for (
@@ -56,16 +56,17 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 				collectionId < Number(nextCollectionId.toString());
 				collectionId++
 			) {
-				const nextItemId = await api.query.template.nextItemId(
-					collectionId
-				);
+				const nextItemId =
+					await api.query.templatePallet.nextItemId(
+						collectionId
+					);
 
 				for (
 					let itemId = 0;
 					itemId < Number(nextItemId.toString());
 					itemId++
 				) {
-					const nft = await api.query.template.nfts(
+					const nft = await api.query.templatePallet.nfts(
 						collectionId,
 						itemId
 					);

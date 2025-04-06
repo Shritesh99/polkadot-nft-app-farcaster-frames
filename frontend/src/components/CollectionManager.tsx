@@ -79,7 +79,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 
 		try {
 			const collections =
-				await api.query.template.collections.entries();
+				await api.query.templatePallet.collections.entries();
 			const formattedCollections = collections
 				.map(([key, value]) => {
 					const id = Number(key.args[0].toString());
@@ -130,14 +130,14 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 		if (!api) return;
 
 		try {
-			const nextItemId = await api.query.template.nextItemId(
+			const nextItemId = await api.query.templatePallet.nextItemId(
 				collectionId
 			);
 			const nftPromises = Array.from(
 				{ length: Number(nextItemId.toString() + 1) },
 				async (_, itemId) => {
 					try {
-						const nft = await api.query.template.nfts(
+						const nft = await api.query.templatePallet.nfts(
 							collectionId,
 							itemId
 						);
@@ -196,7 +196,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 		}
 
 		try {
-			const tx = api.tx.template.burnNft(collectionId, itemId);
+			const tx = api.tx.templatePallet.burnNft(collectionId, itemId);
 
 			await tx.signAndSend(
 				account.address,
@@ -227,7 +227,11 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 		}
 
 		try {
-			const tx = api.tx.template.transferNft(collectionId, itemId, to);
+			const tx = api.tx.templatePallet.transferNft(
+				collectionId,
+				itemId,
+				to
+			);
 
 			await tx.signAndSend(
 				account.address,

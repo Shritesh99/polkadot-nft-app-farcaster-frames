@@ -1,6 +1,6 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
 
-const LOCAL_NODE_URL = "ws://127.0.0.1:9944";
+const LOCAL_NODE_URL = process.env.NEXT_PUBLIC_LOCAL_NODE_URL!;
 
 export const connectToChain = async (): Promise<ApiPromise> => {
 	try {

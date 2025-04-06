@@ -52,16 +52,17 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		try {
 			// First get all collections
 			const collections =
-				await api.query.template.collections.entries();
+				await api.query.templatePallet.collections.entries();
 
 			// For each collection, get its NFTs
 			const allNFTs: NFT[] = [];
 
 			for (const [key] of collections) {
 				const collectionId = Number(key.args[0].toString());
-				const nextItemId = await api.query.template.nextItemId(
-					collectionId
-				);
+				const nextItemId =
+					await api.query.templatePallet.nextItemId(
+						collectionId
+					);
 
 				for (
 					let itemId = 0;
@@ -69,7 +70,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 					itemId++
 				) {
 					try {
-						const nft = await api.query.template.nfts(
+						const nft = await api.query.templatePallet.nfts(
 							collectionId,
 							itemId
 						);
@@ -140,7 +141,11 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		setError(null);
 
 		try {
-			const tx = api.tx.template.transferNft(collectionId, itemId, to);
+			const tx = api.tx.templatePallet.transferNft(
+				collectionId,
+				itemId,
+				to
+			);
 			await tx.signAndSend(
 				account.address,
 				{ signer },
@@ -175,7 +180,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		setError(null);
 
 		try {
-			const tx = api.tx.template.mintNft(collectionId, itemId);
+			const tx = api.tx.templatePallet.mintNft(collectionId, itemId);
 			await tx.signAndSend(
 				account.address,
 				{ signer },

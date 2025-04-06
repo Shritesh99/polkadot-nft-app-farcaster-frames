@@ -56,7 +56,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 			const priceValue = parseInt(price) || 0;
 
 			// Use the Bytes type for metadata to handle the encoding properly
-			const tx = api.tx.template.createNft(
+			const tx = api.tx.templatePallet.createNft(
 				collectionId,
 				api.createType("Vec<u8>", encodedBytes),
 				priceValue

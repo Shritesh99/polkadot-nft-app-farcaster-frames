@@ -1,5 +1,5 @@
 "use client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
 import type { WalletConnectConfiguration } from "@polkadot-onboard/wallet-connect";
@@ -8,7 +8,7 @@ import { WalletAggregator } from "@polkadot-onboard/core";
 import { WalletConnectProvider } from "@polkadot-onboard/wallet-connect";
 import { InjectedWalletProvider } from "@polkadot-onboard/injected-wallets";
 
-const queryClient = new QueryClient();
+// const queryClient = new QueryClient();
 
 export default function Provider({ children }: { children: React.ReactNode }) {
 	const injectedWalletProvider = new InjectedWalletProvider(
@@ -57,6 +57,7 @@ export default function Provider({ children }: { children: React.ReactNode }) {
 		chainIds: [
 			"polkadot:e143f23803ac50e8f6f8e62695d1ce9e",
 			"polkadot:91b171bb158e2d3848fa23a9f1c25182",
+			"polkadot:151e534f4ed3f974daf288997c09b3fc",
 		],
 		optionalChainIds: [
 			"polkadot:67f9723393ef76214df0118c34bbbd3d",
@@ -77,9 +78,7 @@ export default function Provider({ children }: { children: React.ReactNode }) {
 
 	return (
 		<PolkadotWalletsContextProvider walletAggregator={walletAggregator}>
-			<QueryClientProvider client={queryClient}>
-				{children}
-			</QueryClientProvider>
+			{children}
 		</PolkadotWalletsContextProvider>
 	);
 }
