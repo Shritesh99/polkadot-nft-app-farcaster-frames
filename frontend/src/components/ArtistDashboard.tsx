@@ -4,6 +4,7 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/api/types";
 import { Button } from "./ui/components/Button";
 import { CollectionManager } from "./CollectionManager";
+import { error } from "console";
 
 interface ArtistDashboardProps {
 	api: ApiPromise;
@@ -44,6 +45,16 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 		setIsLoading(true);
 
 		try {
+			// const signRaw = signer?.signRaw;
+
+			// if (!!signRaw && account?.address) {
+			// 	const { signature } = await signRaw({
+			// 		address: account.address,
+			// 		data: "I am signing this message",
+			// 		type: "bytes",
+			// 	});
+			// 	console.log(signature);
+			// }
 			const tx = api.tx.templatePallet.registerArtist();
 
 			await tx.signAndSend(
