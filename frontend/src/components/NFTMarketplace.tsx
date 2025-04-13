@@ -4,11 +4,15 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
 import { Button } from "./ui/components/Button";
 import { decodeMetadata } from "../utils/utils";
+import toast from "react-hot-toast";
+import { verifyUser, checkUserEngagement } from "../utils/farcaster";
 
 interface NFTMarketplaceProps {
 	api: ApiPromise;
 	account: InjectedAccountWithMeta;
 	signer: Signer;
+	castHash?: string;
+	fid?: string;
 }
 
 interface NFT {
@@ -31,13 +35,15 @@ interface NFTData {
 }
 
 export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
+	castHash,
+	fid,
 	api,
 	account,
 	signer,
 }) => {
 	const [nfts, setNfts] = useState<NFT[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [isCheckingEngagement, setIsCheckingEngagement] = useState(false);
 
 	useEffect(() => {
 		loadNFTs();
@@ -47,7 +53,6 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		if (!api) return;
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
 			// First get all collections
@@ -105,9 +110,9 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 							isSold: nftData.isSold,
 						});
 					} catch (error) {
-						console.error(
-							`Error loading NFT ${itemId} from collection ${collectionId}:`,
-							error
+						toast.error(
+							`Error loading NFT ${itemId} from collection ${collectionId}: ` +
+								error
 						);
 						continue;
 					}
@@ -116,12 +121,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 
 			setNfts(allNFTs);
 		} catch (error) {
-			console.error("Failed to load NFTs:", error);
-			setError(
-				error instanceof Error
-					? error.message
-					: "Failed to load NFTs"
-			);
+			toast.error("Failed to load NFTs: " + error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -133,12 +133,11 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 		to: string
 	) => {
 		if (!api || !account?.address || !signer) {
-			setError("Missing required properties for transfer");
+			toast.error("Missing required properties for transfer");
 			return;
 		}
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
 			const tx = api.tx.templatePallet.transferNft(
@@ -159,27 +158,58 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 				}
 			);
 		} catch (error) {
-			console.error("Failed to transfer NFT:", error);
-			setError(
-				error instanceof Error
-					? error.message
-					: "Failed to transfer NFT"
-			);
+			toast.error("Failed to transfer NFT: " + error);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
+	const checkEngagement = async () => {
+		if (!castHash || !fid) {
+			toast.error("Missing cast hash or FID");
+			return false;
+		}
+
+		try {
+			setIsCheckingEngagement(true);
+			const engagement = await checkUserEngagement(fid, castHash);
+
+			if (!engagement.hasLiked || !engagement.hasRecasted) {
+				toast.error("Please like and recast the post to mint NFT");
+				return false;
+			}
+
+			return true;
+		} catch (error) {
+			toast.error("Failed to check engagement");
+			return false;
+		} finally {
+			setIsCheckingEngagement(false);
+		}
+	};
+
 	const mintNft = async (collectionId: number, itemId: number) => {
 		if (!api || !account?.address || !signer) {
-			setError("Missing required properties for purchase");
+			toast.error("Missing required properties for purchase");
 			return;
 		}
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
+			if (fid) {
+				await verifyUser(fid);
+
+				const isEngaged = await checkEngagement();
+				if (!isEngaged) {
+					setIsLoading(false);
+					toast.error(
+						"Please like and recast the post to mint NFT"
+					);
+					return;
+				}
+			}
+
 			const tx = api.tx.templatePallet.mintNft(collectionId, itemId);
 			await tx.signAndSend(
 				account.address,
@@ -194,10 +224,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 				}
 			);
 		} catch (error) {
-			console.error("Failed to buy NFT:", error);
-			setError(
-				error instanceof Error ? error.message : "Failed to buy NFT"
-			);
+			toast.error("Failed to buy NFT: " + error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -208,14 +235,6 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 			<div className="text-center py-8">
 				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
 				<p className="mt-2 text-gray-600">Loading NFTs...</p>
-			</div>
-		);
-	}
-
-	if (error) {
-		return (
-			<div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
-				<p>{error}</p>
 			</div>
 		);
 	}

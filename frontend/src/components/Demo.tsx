@@ -18,6 +18,8 @@ interface DemoProps {
 export const Demo: React.FC<DemoProps> = ({ setConnectModalOpen }) => {
 	const [isSDKLoaded, setIsSDKLoaded] = useState(false);
 	const [currentView, setCurrentView] = useState<View>("marketplace");
+	const [castHash, setCastHash] = useState("");
+	const [fid, setFid] = useState("");
 	const { api } = useChain();
 	const {
 		selectedAccount,
@@ -29,6 +31,12 @@ export const Demo: React.FC<DemoProps> = ({ setConnectModalOpen }) => {
 	useEffect(() => {
 		const load = async () => {
 			await sdk.actions.ready();
+			const context = await sdk.context;
+			setCastHash(
+				context?.location?.cast?.hash ||
+					"0xa2fbef8c8e4d00d8f84ff45f9763b8bae2c5c544"
+			);
+			setFid(context?.user?.fid?.toString() || "");
 		};
 		if (sdk && !isSDKLoaded) {
 			setIsSDKLoaded(true);
@@ -143,6 +151,8 @@ export const Demo: React.FC<DemoProps> = ({ setConnectModalOpen }) => {
 			<div className="bg-white shadow-sm rounded-lg p-6">
 				{currentView === "marketplace" && (
 					<NFTMarketplace
+						castHash={castHash}
+						fid={fid}
 						api={api}
 						account={selectedAccount}
 						signer={signer}

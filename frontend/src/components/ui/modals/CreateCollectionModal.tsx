@@ -3,6 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
 import { Button } from "../components/Button";
+import toast from "react-hot-toast";
 
 interface CreateCollectionModalProps {
 	api: ApiPromise;
@@ -24,16 +25,14 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 
 	const createCollection = async () => {
 		if (!api || !account?.address || !signer) {
-			setError("Missing required properties");
+			toast.error("Missing required properties");
 			return;
 		}
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
 			const metadata = {
@@ -63,8 +62,7 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 				}
 			);
 		} catch (error) {
-			console.error("Failed to create collection:", error);
-			setError("Failed to create collection");
+			toast.error("Failed to create collection: " + error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -78,12 +76,6 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 				<h2 className="text-2xl font-bold text-gray-800 mb-4">
 					Create New Collection
 				</h2>
-
-				{error && (
-					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-						{error}
-					</div>
-				)}
 
 				<div className="space-y-4">
 					<div>

@@ -3,6 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/types/types";
 import { Button } from "../components/Button";
+import toast from "react-hot-toast";
 
 interface CreateNFTModalProps {
 	api: ApiPromise;
@@ -28,16 +29,14 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 	const [imageUrl, setImageUrl] = useState("");
 	const [price, setPrice] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 
 	const createNFT = async () => {
 		if (!api || !account?.address || !signer) {
-			setError("Missing required properties");
+			toast.error("Missing required properties");
 			return;
 		}
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
 			// Create metadata as JSON
@@ -77,8 +76,7 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 				}
 			});
 		} catch (error) {
-			console.error("Failed to mint NFT:", error);
-			setError("Failed to mint NFT");
+			toast.error("Failed to mint NFT: " + error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -92,12 +90,6 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 				<h2 className="text-2xl font-bold text-gray-800 mb-4">
 					Create New NFT
 				</h2>
-
-				{error && (
-					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded placeholder:text-gray-400 text-gray-700">
-						{error}
-					</div>
-				)}
 
 				<div className="space-y-4">
 					<div>

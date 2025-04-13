@@ -6,6 +6,7 @@ import { Button } from "./ui/components/Button";
 import { decodeMetadata } from "../utils/utils";
 import { CreateCollectionModal } from "./ui/modals/CreateCollectionModal";
 import { CreateNFTModal } from "./ui/modals/CreateNFTModal";
+import toast from "react-hot-toast";
 
 interface CollectionManagerProps {
 	api: ApiPromise;
@@ -121,7 +122,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				);
 			setCollections(formattedCollections);
 		} catch (error) {
-			console.error("Failed to load collections:", error);
+			toast.error("Failed to load collections:", error);
 			setError("Failed to load collections");
 		}
 	};
@@ -172,9 +173,8 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 							isSold: nftData.isSold,
 						};
 					} catch (error) {
-						console.error(
-							`Error loading NFT ${itemId}:`,
-							error
+						toast.error(
+							`Error loading NFT ${itemId}: ` + error
 						);
 						return null;
 					}
@@ -211,7 +211,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				}
 			);
 		} catch (error) {
-			console.error("Failed to burn NFT:", error);
+			toast.error("Failed to burn NFT: " + error);
 			setError("Failed to burn NFT");
 		}
 	};
@@ -233,27 +233,23 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				to
 			);
 
-			await tx.signAndSend(
-				account.address,
-				{ signer },
-				({ status }) => {
-					if (status.isInBlock) {
-						console.log(
-							`NFT transferred in block ${status.asInBlock.toString()}`
-						);
-						loadNFTs(collectionId);
-					}
+			await tx.signAndSend(account.address, {}, ({ status }) => {
+				if (status.isInBlock) {
+					console.log(
+						`NFT transferred in block ${status.asInBlock.toString()}`
+					);
+					loadNFTs(collectionId);
 				}
-			);
+			});
 		} catch (error) {
-			console.error("Failed to transfer NFT:", error);
+			toast.error("Failed to transfer NFT: " + error);
 			setError("Failed to transfer NFT");
 		}
 	};
 
 	return (
 		<div className="max-w-6xl mx-auto p-4 sm:p-6">
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+			<div className="flex flex-col gap-4 sm:gap-8">
 				{/* Collections List */}
 				<div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
 					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
@@ -386,7 +382,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 														</p>
 														<p className="text-xs text-gray-500">
 															Status:{" "}
-															{!nft.isSold
+															{nft.isSold
 																? "Sold"
 																: "Available"}
 														</p>

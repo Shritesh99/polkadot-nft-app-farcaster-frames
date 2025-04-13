@@ -42,7 +42,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 		try {
 			await connectSpecificWallet(wallet);
 			setSelectedWallet(walletId);
-			toast.success("Wallet connected successfully!");
 		} catch (err) {
 			console.error("Failed to connect wallet:", err);
 			toast.error("Failed to connect wallet");
@@ -66,7 +65,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 		try {
 			await selectAccount(account);
 			onClose();
-			toast.success("Account selected successfully!");
 		} catch (err) {
 			console.error("Failed to select account:", err);
 			toast.error("Failed to select account");
@@ -99,12 +97,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 						</svg>
 					</button>
 				</div>
-
-				{error && (
-					<div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-						{error.message}
-					</div>
-				)}
 
 				<div className="space-y-4">
 					{availableWallets.map((wallet) => (
@@ -145,56 +137,64 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 							Select Account
 						</h3>
 						<div className="space-y-2">
-							{accounts.map((account) => (
-								<div
-									key={account.address}
-									className={`p-3 border rounded-lg cursor-pointer transition-colors duration-300 ${
-										selectedAccountAddress ===
-										account.address
-											? "border-blue-500 bg-blue-50"
-											: "hover:bg-gray-50"
-									}`}
-									onClick={() =>
-										setSelectedAccountAddress(
+							{accounts
+								.filter(function (item, pos) {
+									return (
+										accounts.indexOf(item) == pos
+									);
+								})
+								.map((account) => (
+									<div
+										key={account.address}
+										className={`p-3 border rounded-lg cursor-pointer transition-colors duration-300 ${
+											selectedAccountAddress ===
 											account.address
-										)
-									}>
-									<div className="flex items-center justify-between">
-										<div>
-											<h4 className="font-medium text-gray-900">
-												{account.meta
-													.name ||
-													"Account"}
-											</h4>
-											<p className="text-sm text-gray-500">
-												{account.address.slice(
-													0,
-													6
-												)}
-												...
-												{account.address.slice(
-													-4
-												)}
-											</p>
+												? "border-blue-500 bg-blue-50"
+												: "hover:bg-gray-50"
+										}`}
+										onClick={() =>
+											setSelectedAccountAddress(
+												account.address
+											)
+										}>
+										<div className="flex items-center justify-between">
+											<div>
+												<h4 className="font-medium text-gray-900">
+													{account.meta
+														.name ||
+														"Account"}
+												</h4>
+												<p className="text-sm text-gray-500">
+													{account.address.slice(
+														0,
+														6
+													)}
+													...
+													{account.address.slice(
+														-4
+													)}
+												</p>
+											</div>
+											{selectedAccountAddress ===
+												account.address && (
+												<svg
+													className="w-5 h-5 text-blue-500"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24">
+													<path
+														strokeLinecap="round"
+														strokeLinejoin="round"
+														strokeWidth={
+															2
+														}
+														d="M5 13l4 4L19 7"
+													/>
+												</svg>
+											)}
 										</div>
-										{selectedAccountAddress ===
-											account.address && (
-											<svg
-												className="w-5 h-5 text-blue-500"
-												fill="none"
-												stroke="currentColor"
-												viewBox="0 0 24 24">
-												<path
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													strokeWidth={2}
-													d="M5 13l4 4L19 7"
-												/>
-											</svg>
-										)}
 									</div>
-								</div>
-							))}
+								))}
 						</div>
 					</div>
 				)}
@@ -209,7 +209,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 					{accounts.length !== 0 && (
 						<Button
 							onClick={handleAccountSelect}
-							isloading={isConnecting ? true : undefined}
 							disabled={
 								!selectedAccountAddress || isConnecting
 							}

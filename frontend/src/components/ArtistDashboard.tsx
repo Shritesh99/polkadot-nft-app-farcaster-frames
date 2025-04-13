@@ -4,7 +4,7 @@ import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
 import type { Signer } from "@polkadot/api/types";
 import { Button } from "./ui/components/Button";
 import { CollectionManager } from "./CollectionManager";
-import { error } from "console";
+import toast from "react-hot-toast";
 
 interface ArtistDashboardProps {
 	api: ApiPromise;
@@ -33,7 +33,7 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 			);
 			setIsRegistered(Boolean(isArtist.toJSON()));
 		} catch (error) {
-			console.error("Failed to check artist status:", error);
+			toast.error("Failed to check artist status:" + error);
 		}
 	};
 
@@ -45,16 +45,6 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 		setIsLoading(true);
 
 		try {
-			// const signRaw = signer?.signRaw;
-
-			// if (!!signRaw && account?.address) {
-			// 	const { signature } = await signRaw({
-			// 		address: account.address,
-			// 		data: "I am signing this message",
-			// 		type: "bytes",
-			// 	});
-			// 	console.log(signature);
-			// }
 			const tx = api.tx.templatePallet.registerArtist();
 
 			await tx.signAndSend(
@@ -75,7 +65,7 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 				}
 			);
 		} catch (error) {
-			console.error("Failed to register as artist:", error);
+			toast.error("Failed to register as artist:" + error);
 		} finally {
 			setIsLoading(false);
 		}
