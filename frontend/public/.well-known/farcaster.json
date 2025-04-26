@@ -1,4 +1,9 @@
 {
+	"accountAssociation": {
+		"header": "eyJmaWQiOjQwMDcxMywidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDFENDAxYTUyMzcxOUM1OGFBN2JhYTIzQjYxNTg3QzEyMGJkZDgxY0YifQ",
+		"payload": "eyJkb21haW4iOiJwb2xrYWRvdC1uZnQtZmFyY2FzdGVyLWZyYW1lcy1kZW1vLnJ4c2hyaTk5LmxpdmUifQ",
+		"signature": "MHg4NTYyYjMzODE0MThiZGQ2YmFhYTNlODRmZDJkOWE1MjIyMDg0OTMzN2U4NmZmYTlkNjlmMTc4MGNhNjM0MDg3N2EyZjNiNDUyMjNkN2U4Y2NhM2I0ODg5ZTE0MzAxN2UxYWNhZDgwMGE5MjA4Njg5MGVkYmJmNTI2OWI5MTE5YjFi"
+	},
 	"frame": {
 		"name": "Polkadot NFT Demo",
 		"version": "1",

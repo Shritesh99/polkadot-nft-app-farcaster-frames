@@ -23,6 +23,12 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
+			<head>
+				<meta
+					name="fc:frame"
+					content='{"version":"next","imageUrl":"https://polkadot-nft-farcaster-frames-demo.rxshri99.live/Intercaster.png","button":{"title":"Mint NFT in Polkadot","action":{"type":"launch_frame","name":"","url":"https://polkadot-nft-farcaster-frames-demo.rxshri99.live/","splashBackgroundColor":"#f5f5f5"}}}'
+				/>
+			</head>
 			<body
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
 				<PolkadotProvider>
