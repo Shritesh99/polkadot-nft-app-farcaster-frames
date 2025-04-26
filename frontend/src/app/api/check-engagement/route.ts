@@ -5,7 +5,8 @@ export async function GET(request: Request) {
 
 	const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || "";
 	const NEYNAR_API_URL =
-		process.env.NEYNAR_API_URL || "https://api.neynar.com/v2/farcaster/";
+		process.env.NEXT_PUBLIC_NEYNAR_API_URL ||
+		"https://api.neynar.com/v2/farcaster/";
 
 	try {
 		if (!fid || !castHash) {

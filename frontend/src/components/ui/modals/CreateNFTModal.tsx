@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 interface CreateNFTModalProps {
 	api: ApiPromise;
 	account: InjectedAccountWithMeta;
-	signer: Signer;
+	signer: Signer | unknown;
 	collectionId: number;
 	isOpen: boolean;
 	onClose: () => void;
@@ -76,7 +76,9 @@ export const CreateNFTModal: React.FC<CreateNFTModalProps> = ({
 				}
 			});
 		} catch (error) {
-			toast.error("Failed to mint NFT: " + error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			toast.error("Failed to mint NFT: " + errorMessage);
 		} finally {
 			setIsLoading(false);
 		}

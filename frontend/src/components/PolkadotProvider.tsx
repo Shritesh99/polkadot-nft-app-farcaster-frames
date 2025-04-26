@@ -51,13 +51,13 @@ export default function Provider({ children }: { children: React.ReactNode }) {
 		metadata: {
 			name: "Polkadot Demo",
 			description: "Polkadot Demo",
-			url: "#",
+			url: "",
 			icons: ["Wallet_Connect.svg"],
 		},
 		chainIds: [
 			"polkadot:e143f23803ac50e8f6f8e62695d1ce9e",
 			"polkadot:91b171bb158e2d3848fa23a9f1c25182",
-			"polkadot:151e534f4ed3f974daf288997c09b3fc",
+			`polkadot:${process.env.NEXT_PUBLIC_LOCAL_NODE_CAPID!}`,
 		],
 		optionalChainIds: [
 			"polkadot:67f9723393ef76214df0118c34bbbd3d",

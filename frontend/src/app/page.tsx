@@ -10,6 +10,7 @@ import { useWallet } from "../contexts/WalletContext";
 import sdk from "@farcaster/frame-sdk";
 import { FrameContext } from "../types/farcaster";
 import { verifyUser } from "../utils/farcaster";
+import Image from "next/image";
 
 const Demo = dynamic(
 	() => import("../components/Demo").then((mod) => mod.Demo),
@@ -33,7 +34,9 @@ export default function Home() {
 				setUserContext(context as unknown as FrameContext);
 
 				if (context?.user?.fid) {
-					await verifyUser(context.user.fid);
+					await verifyUser(
+						context.user.fid as unknown as string
+					);
 				}
 			} catch (error) {
 				console.error("Error loading user context:", error);
@@ -60,12 +63,15 @@ export default function Home() {
 								) : userContext?.user ? (
 									<div className="flex items-center space-x-2 bg-gray-100 p-2 rounded-lg transition-all hover:bg-gray-200">
 										{userContext.user.pfpUrl ? (
-											<img
+											<Image
 												src={
 													userContext
 														.user
 														.pfpUrl
 												}
+												width={0}
+												height={0}
+												sizes="100vw"
 												alt="Profile"
 												className="w-8 h-8 rounded-full border-2 border-indigo-300"
 											/>

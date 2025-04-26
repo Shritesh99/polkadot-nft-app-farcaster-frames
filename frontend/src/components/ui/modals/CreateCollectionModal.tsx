@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import type { Signer } from "@polkadot/types/types";
+import type { Signer } from "@polkadot/api/types";
 import { Button } from "../components/Button";
 import toast from "react-hot-toast";
 
 interface CreateCollectionModalProps {
 	api: ApiPromise;
 	account: InjectedAccountWithMeta;
-	signer: Signer;
+	signer: Signer | unknown;
 	isOpen: boolean;
 	onClose: () => void;
 	onSuccess: () => void;
@@ -62,7 +62,9 @@ export const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 				}
 			);
 		} catch (error) {
-			toast.error("Failed to create collection: " + error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			toast.error("Failed to create collection: " + errorMessage);
 		} finally {
 			setIsLoading(false);
 		}

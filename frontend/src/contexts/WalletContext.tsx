@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import type { Signer } from "@polkadot/types/types";
+import type { Signer } from "@polkadot/rpc-augment/node_modules/@polkadot/types/types/extrinsic";
 import { useWallets } from "@polkadot-onboard/react";
 import type { BaseWallet } from "@polkadot-onboard/core";
 
@@ -156,7 +156,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 			}
 
 			setSelectedAccount(account);
-			setSigner(wallet.signer);
+			setSigner(wallet.signer as unknown as Signer);
 		} catch (err) {
 			console.error("Failed to select account:", err);
 			setError(
@@ -234,13 +234,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 			);
 		}
 	};
-
-	// Clean up on unmount
-	useEffect(() => {
-		return () => {
-			disconnectWallet();
-		};
-	}, []);
 
 	return (
 		<WalletContext.Provider

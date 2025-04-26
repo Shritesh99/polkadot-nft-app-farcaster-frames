@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import type { Signer } from "@polkadot/types/types";
+import type { Signer } from "@polkadot/rpc-augment/node_modules/@polkadot/types/types/extrinsic";
 import { Button } from "./ui/components/Button";
 import { decodeMetadata } from "../utils/utils";
 import toast from "react-hot-toast";
 import { verifyUser, checkUserEngagement } from "../utils/farcaster";
+import Image from "next/image";
 
 interface NFTMarketplaceProps {
 	api: ApiPromise;
@@ -43,10 +44,11 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 }) => {
 	const [nfts, setNfts] = useState<NFT[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
-	const [isCheckingEngagement, setIsCheckingEngagement] = useState(false);
+	const [, setIsCheckingEngagement] = useState(false);
 
 	useEffect(() => {
 		loadNFTs();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [api]);
 
 	const loadNFTs = async () => {
@@ -147,7 +149,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 			);
 			await tx.signAndSend(
 				account.address,
-				{ signer },
+				{ signer: signer as unknown as Signer },
 				({ status }) => {
 					if (status.isInBlock) {
 						console.log(
@@ -181,7 +183,7 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 
 			return true;
 		} catch (error) {
-			toast.error("Failed to check engagement");
+			toast.error("Failed to check engagement with error: " + error);
 			return false;
 		} finally {
 			setIsCheckingEngagement(false);
@@ -203,9 +205,6 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 				const isEngaged = await checkEngagement();
 				if (!isEngaged) {
 					setIsLoading(false);
-					toast.error(
-						"Please like and recast the post to mint NFT"
-					);
 					return;
 				}
 			}
@@ -244,6 +243,10 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 			<h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-gray-900">
 				Available NFTs
 			</h2>
+			<p className="text-sm text-gray-600 mb-4 sm:mb-6">
+				Only mint NFTs when you have liked and recasted this cast on
+				Warpcast
+			</p>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 				{nfts.map((nft) => (
@@ -252,7 +255,10 @@ export const NFTMarketplace: React.FC<NFTMarketplaceProps> = ({
 						className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
 						<div className="aspect-w-16 aspect-h-9 bg-gray-200">
 							{nft.metadata.image && (
-								<img
+								<Image
+									width={0}
+									height={0}
+									sizes="100vw"
 									src={nft.metadata.image}
 									alt={`NFT ${nft.id}`}
 									className="object-cover w-full h-full"

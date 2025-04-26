@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import type { Signer } from "@polkadot/types/types";
-import { Button } from "./ui/components/Button";
+import type { Signer } from "@polkadot/rpc-augment/node_modules/@polkadot/types/types/extrinsic";
 import toast from "react-hot-toast";
 import { decodeMetadata } from "../utils/utils";
+import Image from "next/image";
 
 interface UserDashboardProps {
 	api: ApiPromise;
@@ -33,13 +33,13 @@ interface NFTData {
 export const UserDashboard: React.FC<UserDashboardProps> = ({
 	api,
 	account,
-	signer,
 }) => {
 	const [userNFTs, setUserNFTs] = useState<NFT[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		loadUserNFTs();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [api, account]);
 
 	const loadUserNFTs = async () => {
@@ -111,8 +111,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
 			setUserNFTs(allUserNFTs);
 		} catch (error) {
-			console.error("Failed to load NFTs:", error);
-			toast.error("Failed to load your NFTs");
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			console.error("Failed to load NFTs:", errorMessage);
+			toast.error("Failed to load your NFTs: " + errorMessage);
 		} finally {
 			setIsLoading(false);
 		}
@@ -132,7 +134,9 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 				<h2 className="text-2xl font-bold text-gray-800 mb-4">
 					Your NFT Collection
 				</h2>
-				<p className="text-gray-600">You don't own any NFTs yet.</p>
+				<p className="text-gray-600">
+					You don&apos;t own any NFTs yet.
+				</p>
 				<p className="text-gray-600 mt-2">
 					Browse the marketplace to discover and purchase NFTs!
 				</p>
@@ -152,7 +156,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 						className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
 						<div className="aspect-w-16 aspect-h-9 bg-gray-200">
 							{nft.metadata.image && (
-								<img
+								<Image
+									width={0}
+									height={0}
+									sizes="100vw"
 									src={nft.metadata.image}
 									alt={`NFT ${nft.id}`}
 									className="object-cover w-full h-full"

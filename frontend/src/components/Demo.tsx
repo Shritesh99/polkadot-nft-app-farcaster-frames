@@ -32,10 +32,11 @@ export const Demo: React.FC<DemoProps> = ({ setConnectModalOpen }) => {
 		const load = async () => {
 			await sdk.actions.ready();
 			const context = await sdk.context;
-			setCastHash(
-				context?.location?.cast?.hash ||
-					"0xa2fbef8c8e4d00d8f84ff45f9763b8bae2c5c544"
-			);
+			if (context?.location && "cast" in context.location) {
+				setCastHash(context.location.cast.hash || "");
+			} else {
+				setCastHash("");
+			}
 			setFid(context?.user?.fid?.toString() || "");
 		};
 		if (sdk && !isSDKLoaded) {

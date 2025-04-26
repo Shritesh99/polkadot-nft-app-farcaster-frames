@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import type { Signer } from "@polkadot/api/types";
+import type { Signer } from "@polkadot/rpc-augment/node_modules/@polkadot/types/types/extrinsic";
 import { Button } from "./ui/components/Button";
 import { CollectionManager } from "./CollectionManager";
 import toast from "react-hot-toast";
@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 interface ArtistDashboardProps {
 	api: ApiPromise;
 	account: InjectedAccountWithMeta;
-	signer: Signer;
+	signer: Signer | unknown;
 }
 
 export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
@@ -22,6 +22,7 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 
 	useEffect(() => {
 		checkArtistStatus();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [api, account]);
 
 	const checkArtistStatus = async () => {
@@ -64,8 +65,10 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 					}
 				}
 			);
-		} catch (error) {
-			toast.error("Failed to register as artist:" + error);
+		} catch (error: unknown) {
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			toast.error("Failed to register as artist: " + errorMessage);
 		} finally {
 			setIsLoading(false);
 		}
@@ -96,7 +99,11 @@ export const ArtistDashboard: React.FC<ArtistDashboardProps> = ({
 			<h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-gray-900">
 				Artist Dashboard
 			</h1>
-			<CollectionManager api={api} account={account} signer={signer} />
+			<CollectionManager
+				api={api}
+				account={account}
+				signer={signer as unknown}
+			/>
 		</div>
 	);
 };

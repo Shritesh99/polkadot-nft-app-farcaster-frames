@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { ApiPromise } from "@polkadot/api";
 import type { InjectedAccountWithMeta } from "@polkadot/extension-inject/types";
-import type { Signer } from "@polkadot/types/types";
 import { Button } from "./ui/components/Button";
 import { decodeMetadata } from "../utils/utils";
 import { CreateCollectionModal } from "./ui/modals/CreateCollectionModal";
 import { CreateNFTModal } from "./ui/modals/CreateNFTModal";
 import toast from "react-hot-toast";
+import Image from "next/image";
+import { Signer } from "@polkadot/api/types";
 
 interface CollectionManagerProps {
 	api: ApiPromise;
 	account: InjectedAccountWithMeta;
-	signer: Signer;
+	signer: Signer | unknown;
 }
 
 interface Collection {
@@ -67,12 +68,14 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 
 	useEffect(() => {
 		loadCollections();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [api, account]);
 
 	useEffect(() => {
 		if (selectedCollection) {
 			loadNFTs(selectedCollection.id);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [selectedCollection]);
 
 	const loadCollections = async () => {
@@ -122,7 +125,9 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				);
 			setCollections(formattedCollections);
 		} catch (error) {
-			toast.error("Failed to load collections:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			toast.error("Failed to load collections: " + errorMessage);
 			setError("Failed to load collections");
 		}
 	};
@@ -173,8 +178,13 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 							isSold: nftData.isSold,
 						};
 					} catch (error) {
+						const errorMessage =
+							error instanceof Error
+								? error.message
+								: String(error);
 						toast.error(
-							`Error loading NFT ${itemId}: ` + error
+							`Error loading NFT ${itemId}: ` +
+								errorMessage
 						);
 						return null;
 					}
@@ -211,7 +221,9 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				}
 			);
 		} catch (error) {
-			toast.error("Failed to burn NFT: " + error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			toast.error("Failed to burn NFT: " + errorMessage);
 			setError("Failed to burn NFT");
 		}
 	};
@@ -242,7 +254,9 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				}
 			});
 		} catch (error) {
-			toast.error("Failed to transfer NFT: " + error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			toast.error("Failed to transfer NFT: " + errorMessage);
 			setError("Failed to transfer NFT");
 		}
 	};
@@ -302,7 +316,6 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 					</div>
 				</div>
 
-				{/* NFTs in Selected Collection */}
 				<div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
 					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
 						<h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
@@ -353,7 +366,14 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 													</p>
 													{nft.metadata
 														.image && (
-														<img
+														<Image
+															width={
+																0
+															}
+															height={
+																0
+															}
+															sizes="100vw"
 															src={
 																nft
 																	.metadata
@@ -447,7 +467,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 			<CreateCollectionModal
 				api={api}
 				account={account}
-				signer={signer}
+				signer={signer as unknown}
 				isOpen={isCreateCollectionModalOpen}
 				onClose={() => setIsCreateCollectionModalOpen(false)}
 				onSuccess={loadCollections}
@@ -457,7 +477,7 @@ export const CollectionManager: React.FC<CollectionManagerProps> = ({
 				<CreateNFTModal
 					api={api}
 					account={account}
-					signer={signer}
+					signer={signer as unknown}
 					collectionId={selectedCollection.id}
 					isOpen={isCreateNFTModalOpen}
 					onClose={() => setIsCreateNFTModalOpen(false)}

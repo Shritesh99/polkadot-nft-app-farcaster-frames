@@ -52,7 +52,7 @@ export const ChainProvider: React.FC<{ children: React.ReactNode }> = ({
 				setApi(null);
 			}
 		};
-	}, []);
+	}, [api]);
 
 	return (
 		<ChainContext.Provider value={{ api, isConnecting, error }}>

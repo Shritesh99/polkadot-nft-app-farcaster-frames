@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useWallet } from "../../../contexts/WalletContext";
 import { Button } from "../components/Button";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface ConnectWalletModalProps {
 	isOpen: boolean;
@@ -16,7 +17,6 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 		availableWallets,
 		connectSpecificWallet,
 		isConnecting,
-		error,
 		accounts,
 		selectAccount,
 	} = useWallet();
@@ -65,9 +65,11 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 		try {
 			await selectAccount(account);
 			onClose();
-		} catch (err) {
-			console.error("Failed to select account:", err);
-			toast.error("Failed to select account");
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			console.error("Failed to select account:", errorMessage);
+			toast.error("Failed to select account: " + errorMessage);
 		}
 	};
 
@@ -112,7 +114,10 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 							}>
 							<div className="flex items-center space-x-4">
 								{wallet.metadata.iconUrl && (
-									<img
+									<Image
+										width={0}
+										height={0}
+										sizes="100vw"
 										src={wallet.metadata.iconUrl}
 										alt={wallet.metadata.title}
 										className="w-8 h-8"
@@ -138,14 +143,18 @@ export const ConnectWalletModal: React.FC<ConnectWalletModalProps> = ({
 						</h3>
 						<div className="space-y-2">
 							{accounts
-								.filter(function (item, pos) {
-									return (
-										accounts.indexOf(item) == pos
-									);
-								})
-								.map((account) => (
+								.filter(
+									(account, index, self) =>
+										index ===
+										self.findIndex(
+											(a) =>
+												a.address ===
+												account.address
+										)
+								)
+								.map((account, index) => (
 									<div
-										key={account.address}
+										key={`${account.address}-${index}`}
 										className={`p-3 border rounded-lg cursor-pointer transition-colors duration-300 ${
 											selectedAccountAddress ===
 											account.address
