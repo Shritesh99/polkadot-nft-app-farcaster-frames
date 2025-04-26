@@ -2,9 +2,8 @@
 	"frame": {
 		"name": "Polkadot NFT Demo",
 		"version": "1",
-		"iconUrl": "logo.png",
+		"iconUrl": "https://polkadot-nft-farcaster-frames-demo.rxshri99.live/logo.png",
 		"homeUrl": "https://polkadot-nft-farcaster-frames-demo.rxshri99.live/",
-		"imageUrl": "https://polkadot-nft-farcaster-frames-demo.rxshri99.live/logo.png",
 		"buttonTitle": "Polkadot NFT",
 		"splashBackgroundColor": "#f5f5f5"
 	}
