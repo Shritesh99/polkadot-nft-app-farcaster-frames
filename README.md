@@ -24,13 +24,171 @@ The project consists of:
 -    🎨 **Frontend**: Next.js application with Farcaster Frames Mini app
 -    🔌 **Farcaster Integration**: API routes and utilities for verifying user engagement
 
+### Build Your Parachain and Run Locally
+
+We have used the [polkadot-sdk-parachain-template](https://github.com/paritytech/polkadot-sdk-parachain-template) for this demo app. This section provides instructions for building and running the parachain locally.
+
+##### Prerequisites
+
+-    [Rust](https://www.rust-lang.org/)
+-    openssl
+-    cmake
+-    llvm
+-    protobuf
+
+##### 1. Build the Node
+
+```bash
+# Build the node with release optimizations
+cargo build --release
+```
+
+The build process takes some time. When complete, the binary will be available at `./target/release/parachain-template-node`.
+
+##### 2. Run a Development Chain
+
+You can start a development chain with:
+
+```bash
+./target/release/parachain-template-node --dev
+```
+
+This command:
+
+-    Runs a temporary node in development mode
+-    Purges the development chain state on exit
+-    Uses Alice and Bob as pre-funded development accounts
+-    Has no external connections to other networks
+
+Additional useful flags:
+
+-    `--alice`: Includes the pre-defined Alice key in the node's keystore
+-    `--tmp`: Runs a temporary node (state is not saved to disk)
+-    `-d <path>`: Specifies the directory for storing chain data
+
+##### 3. Connect to the Local Node
+
+Once your node is running, you can interact with it using:
+
+-    [Polkadot.js Apps UI](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer)  
+     (Pre-configured for a local node on default ports)
+
+-    Command-line tools (using `curl` to make RPC calls)
+
+##### 4. Modify the Runtime
+
+When making changes to the runtime:
+
+1. Edit the runtime code
+2. Rebuild the runtime: `cargo build --release -p parachain-template-runtime`
+3. Restart your node to apply the changes
+
+##### 5. Connect to a Relay Chain (Optional)
+
+For testing as a parachain:
+
+1. Build the Polkadot relay chain: `cargo build --release`
+2. Follow the [Cumulus Workshop](https://docs.substrate.io/tutorials/build-a-parachain/) for connecting your parachain to a local relay chain
+
 ## Connecting Farcaster Frames to Your Parachain
 
-### How Farcaster Frames Integration Works
+### Wallet Integration
+
+The project supports integration with both Polkadot.js Extension and WalletConnect for seamless user authentication and transaction signing. However, the web extenssion support is not available in Farcaster Frames mini app, so user need to use the Walletconnect only to connect to wallets like [Subwallet](https://www.subwallet.app/) or [Nova Wallet](https://novawallet.io/). Make sure you add your node rpc URL as custom network in these wallets.
+
+### Setting up Wallet Integration
+
+This project uses the [`@polkadot-onboard`](https://www.npmjs.com/package/@polkadot-onboard/react) packages to provide a unified wallet connection experience. The setup is handled by the `PolkadotProvider` component.
+
+#### Wallet Provider Implementation
+
+Check out `frontend/src/components/PolkadotProvider.tsx` for full Polkadot <-> Walletconnect integration.
+
+<details>
+     <summary>frontend/src/components/PolkadotProvider.tsx</summary>
+
+```tsx
+// frontend/src/components/PolkadotProvider.tsx
+
+export default function Provider({ children }: { children: React.ReactNode }) {
+	// Configure injected wallets (browser extensions)
+	// Configure WalletConnect
+	const walletConnectParams: WalletConnectConfiguration = {
+		projectId: process.env.NEXT_PUBLIC_APPKIT_PROJECT_ID!,
+		metadata: {
+			name: "Polkadot Demo",
+			description: "Polkadot Demo",
+			url: "",
+			icons: ["Wallet_Connect.svg"],
+		},
+		chainIds: [
+			"polkadot:e143f23803ac50e8f6f8e62695d1ce9e", // Rococo
+			"polkadot:91b171bb158e2d3848fa23a9f1c25182", // Polkadot
+			`polkadot:${process.env.NEXT_PUBLIC_LOCAL_NODE_CAPID!}`, // Local node
+		],
+		optionalChainIds: [
+			"polkadot:67f9723393ef76214df0118c34bbbd3d", // Westend
+			"polkadot:7c34d42fc815d392057c78b49f2755c7", // Kusama
+		],
+		onSessionDelete: () => {
+			// do something when session is removed
+		},
+	};
+
+	const walletConnectProvider = new WalletConnectProvider(
+		walletConnectParams,
+		process.env.NEXT_PUBLIC_APP_NAME!
+	);
+
+	// Combine all wallet providers
+	const walletAggregator = new WalletAggregator([
+		walletConnectProvider,
+		// Other Wallet Providers
+		// ...
+	]);
+
+	return (
+		<PolkadotWalletsContextProvider walletAggregator={walletAggregator}>
+			{children}
+		</PolkadotWalletsContextProvider>
+	);
+}
+```
+
+</details>
+
+#### Environment Variables
+
+Ensure these environment variables are set in your `.env.local` file:
+
+-    `NEXT_PUBLIC_APP_NAME`: YourAppName
+-    `NEXT_PUBLIC_APPKIT_PROJECT_ID`: YourWalletConnectProjectID
+-    `NEXT_PUBLIC_LOCAL_NODE_CAPID`: YourLocalNodeChainId
+
+To get a WalletConnect Project ID, register your application at [WalletConnect Cloud](https://cloud.walletconnect.com/).
+
+#### Customizing Chain IDs
+
+The `chainIds` array in the WalletConnect configuration specifies which networks your application supports. The format follows the [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md) standard:
+
+```
+polkadot:{chain-id-in-hex}
+```
+
+Common Polkadot ecosystem chain IDs:
+
+-    Polkadot: `polkadot:91b171bb158e2d3848fa23a9f1c25182`
+-    Kusama: `polkadot:7c34d42fc815d392057c78b49f2755c7`
+-    Rococo: `polkadot:e143f23803ac50e8f6f8e62695d1ce9e`
+-    Westend: `polkadot:67f9723393ef76214df0118c34bbbd3d`
+
+For your local node, you'll need to get the genesis hash and convert it to the CAIP format.
+
+### How Farcaster Frames Integration Works?
 
 Farcaster Frames allows web applications to be embedded within the Farcaster client (like Warpcast), enabling interactive experiences directly in the social feed. This project demonstrates how to connect Farcaster Frames to a Polkadot parachain for NFT minting.
 
-#### 1. Frame Configuration
+##### 1. Frame Configuration
 
 The integration starts in the frontend's layout component (`frontend/src/app/layout.tsx`), where we define the Frame metadata:
 
@@ -66,7 +224,7 @@ This metadata defines:
 -    The button text and action (launching the full application)
 -    The URL to your deployed application
 
-#### 2. User Context and Verification
+##### 2. User Context and Verification
 
 When a user interacts with your Frame, the application receives context about the user and their interaction:
 
@@ -98,7 +256,7 @@ useEffect(() => {
 
 </details>
 
-#### 3. Engagement Verification for NFT Minting
+##### 3. Engagement Verification for NFT Minting
 
 The key feature of this application is that users can only mint NFTs if they have liked and recasted the original cast:
 
@@ -157,28 +315,30 @@ const mintNft = async (collectionId: number, itemId: number) => {
 
 To connect your own Farcaster Frames to a Polkadot parachain:
 
-1.   **Create API Routes for Farcaster Verification**:
-     We have used [Neynar](https://docs.neynar.com/reference/quickstart) to interact with the Farcaster Ecosystem, the following API calls given the following files calls the third-party Neynar APIs to get the Frarcaster data. Check out the implementation in the follwing files:
+##### 1. **Create API Routes for Farcaster Verification**:
+
+We have used [Neynar](https://docs.neynar.com/reference/quickstart) to interact with the Farcaster Ecosystem, the following API calls given the following files calls the third-party Neynar APIs to get the Frarcaster data. Check out the implementation in the follwing files:
 
 -    `frontend/src/app/api/verify-user/route.ts` to validate Farcaster user identity
 -    `frontend/src/app/api/check-engagement/route.ts` to verify likes and recasts
 -    `frontend/src/app/api/cast-details/route.ts` to fetch information about a cast
 
-2.   **Configure Frame Metadata**:
+##### 2. **Configure Frame Metadata**:
 
-     -    Add the `fc:frame` meta tag to your application's head
-     -    Customize the button text and action to match your application
+-    Add the `fc:frame` meta tag to your application's head
+-    Customize the button text and action to match your application
 
-3.   **Handle User Context**:
+##### 3. **Handle User Context**:
 
-     -    Use the Farcaster Frame SDK to access user context
-     -    Verify user identity and engagement before allowing NFT minting
+-    Use the Farcaster Frame SDK to access user context
+-    Verify user identity and engagement before allowing NFT minting
 
-4.   **Connect to Polkadot**:
-     -    Use the Polkadot.js API to interact with your parachain
-     -    Implement wallet connection and transaction signing
+##### 4. **Connect to Polkadot**:
 
-## Deployment in Kubernetes
+-    Use the Polkadot.js API to interact with your parachain
+-    Implement wallet connection and transaction signing
+
+## Parachain Deployment in Kubernetes
 
 This section provides instructions for deploying the parachain in a Kubernetes environment.
 
@@ -195,22 +355,23 @@ You must reserve a parachain identifier (ID) before registering your parachain o
 
 To reserve a parachain identifier, follow these steps:
 
-1. Navigate to the Parachains section
+##### 1. Navigate to the Parachains section
 
 -    Click on the Network tab in the top menu
 -    Select the Parachains option from the dropdown menu
 
-2. Register a ParaId
+##### 2. Register a ParaId
 
 -    Select the Parathreads tab
 -    Click on the + ParaId button
 
-3. Review the transaction and click on the + Submit button
-4. After submitting the transaction, you can navigate to the Explorer tab and check the list of recent events for successful registrar.Reserved
+##### 3. Review the transaction and click on the + Submit button
+
+##### 4. After submitting the transaction, you can navigate to the Explorer tab and check the list of recent events for successful registrar.Reserved
 
 ### Pre-deployment Steps
 
-1. **Generate parachain private keys**
+##### 1. **Generate parachain private keys**
 
 -    Generate static node keys (aka network keys)
      Node keys are used to identify nodes on the P2P network with a unique PeerID. To ensure this identifier persists across restarts, it is highly recommended to generate a static network key for all nodes. This practice is particularly important for bootnodes, which have publicly listed addresses that are used by other nodes to bootstrap their connections to the network.
@@ -233,8 +394,9 @@ To reserve a parachain identifier, follow these steps:
      docker run -it parity/subkey:latest generate --scheme sr25519
      ```
 
-2. **Prepare your genesis patch config**
-   Save the following to genesis.patch.json (replace keys and configuration with your own):
+##### 2. **Prepare your genesis patch config**
+
+Save the following to genesis.patch.json (replace keys and configuration with your own):
 
 <details>
      <summary>genesis.patch.json</summary>
@@ -305,7 +467,7 @@ Note that:
 
 </details>
 
-3. **Prepare the Chainsepc**
+##### 3. **Prepare the Chainsepc**
 
 Generate the plain chain spec, make sure to change to your relay chain and parachin id
 
@@ -319,7 +481,7 @@ To initialize the genesis storage for your chain, you need convert your chainspe
 chain-spec-builder --chain-spec-path ./chain-spec/chainspec.raw.json convert-to-raw ./chain-spec/chainspec.plain.json
 ```
 
-4. **Register and activate your Parachain on the Relaychain**
+##### 4. **Register and activate your Parachain on the Relaychain**
 
 -    Register parachain genesis code and state on relay-chain
 
@@ -342,66 +504,66 @@ chain-spec-builder --chain-spec-path ./chain-spec/chainspec.raw.json convert-to-
 
 ### Deployment Steps
 
-1. **Add Helm Charts**
+##### 1. **Add Helm Charts**
 
 ```sh
 helm repo add parity https://paritytech.github.io/helm-charts/
 ```
 
-2. **Prepare Configuration**
+##### 2. **Prepare Configuration**
 
-     The deployment uses Helm charts for managing the Kubernetes resources. Configuration files are located in the `k8s` directory.
+The deployment uses Helm charts for managing the Kubernetes resources. Configuration files are located in the `k8s` directory.
 
-     ```sh
-     # Review the configuration before deployment
-     cat k8s/polkadot-node-deployment.yaml
-     ```
+```sh
+# Review the configuration before deployment
+cat k8s/polkadot-node-deployment.yaml
+```
 
-3. **Deploy Using Helm**
+##### 3. **Deploy Using Helm**
 
-     Deploy the parachain node using the Parity Helm chart:
+Deploy the parachain node using the Parity Helm chart:
 
-     ```sh
-     helm -n default upgrade --install polkadot-nft-parachain -f k8s/polkadot-node-deployment.yaml parity/node
-     ```
+```sh
+helm -n default upgrade --install polkadot-nft-parachain -f k8s/polkadot-node-deployment.yaml parity/node
+```
 
-4. **Verify Deployment**
+##### 4. **Verify Deployment**
 
-     Check that the pods are running correctly:
+Check that the pods are running correctly:
 
-     ```sh
-     kubectl get pods -n default -l app=polkadot-nft-parachain
-     ```
+```sh
+kubectl get pods -n default -l app=polkadot-nft-parachain
+```
 
-5. **Access the Node**
+##### 5. **Access the Node**
 
-     The deployment exposes RPC endpoints that can be accessed within the cluster or externally depending on your configuration:
+The deployment exposes RPC endpoints that can be accessed within the cluster or externally depending on your configuration:
 
-     ```sh
-     # Get service details
-     kubectl get svc -n default -l app=polkadot-nft-parachain
-     ```
+```sh
+# Get service details
+kubectl get svc -n default -l app=polkadot-nft-parachain
+```
 
-6. **Monitor Logs**
+##### 6. **Monitor Logs**
 
-     Monitor the node logs for any issues:
+Monitor the node logs for any issues:
 
-     ```sh
-     kubectl logs -n default -l app=polkadot-nft-parachain -f
-     ```
+```sh
+kubectl logs -n default -l app=polkadot-nft-parachain -f
+```
 
-7. Obtain on-demand coretime to produce your first block
+##### 7. Obtain on-demand coretime to produce your first block
 
--    Execute extrinsic on your relay chain: `onDemandAssignmentProvider.placeOrderAllowDeath ` or `onDemandAssignmentProvider.placeOrderKeepAlive`:
+Execute extrinsic on your relay chain: `onDemandAssignmentProvider.placeOrderAllowDeath ` or `onDemandAssignmentProvider.placeOrderKeepAlive`:
 
-     -    maxAmount: 10000000000000 (13 zeros, ie. 10 ROC)
-     -    paraId: your parachain ID
+-    maxAmount: 10000000000000 (13 zeros, ie. 10 ROC)
+-    paraId: your parachain ID
 
-     After executing this, you should have successfully produced your first block !
+After executing this, you should have successfully produced your first block !
 
-     ```sh
-     INFO tokio-runtime-worker substrate: [Parachain] ✨ Imported #1 (0xa075…10d6)
-     ```
+```sh
+INFO tokio-runtime-worker substrate: [Parachain] ✨ Imported #1 (0xa075…10d6)
+```
 
 ### Configuration Options
 
@@ -419,7 +581,7 @@ Modify these settings according to your deployment requirements.
 
 To deploy the Farcaster Frames-enabled frontend:
 
-1. **Build the frontend**:
+##### 1. **Build the frontend**:
 
 ```sh
 cd frontend
@@ -427,25 +589,25 @@ yarn install
 yarn build
 ```
 
-2. **Deploy to your hosting provider** (e.g., Vercel, Netlify, or your own server)
+##### 2. **Deploy to your hosting provider** (e.g., Vercel, Netlify, or your own server)
 
-3. **Configure environment variables**:
+##### 3. **Configure environment variables**:
 
-     - `NEXT_PUBLIC_URL`: URL for the Farcaster Frames Mini App, can be a vercel hosted URL.
-     - `NEXT_PUBLIC_LOCAL_NODE_URL`: WebSocket URL of your parachain node
-     - `NEXT_PUBLIC_LOCAL_NODE_CAPID`: [CAIP for the WalletConnect as it uses chain ids based on the CAIP standard](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-13.md)
-     - `NEXT_PUBLIC_APP_NAME`: Name of your application
-     - `NEXT_PUBLIC_APPKIT_PROJECT_ID`: Your WalletConnect project ID
-     - `NEXT_PUBLIC_NEYNAR_API_URL`: We have used [Neynar](https://docs.neynar.com/reference/quickstart) an an independent 3rd party provider that offers Farcaster data
-     - `NEYNAR_API_KEY`: Neynar API key to call REST APIs.
+-    `NEXT_PUBLIC_URL`: URL for the Farcaster Frames Mini App, can be a vercel hosted URL.
+-    `NEXT_PUBLIC_LOCAL_NODE_URL`: WebSocket URL of your parachain node
+-    `NEXT_PUBLIC_LOCAL_NODE_CAPID`: [CAIP for the WalletConnect as it uses chain ids based on the CAIP standard](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-13.md)
+-    `NEXT_PUBLIC_APP_NAME`: Name of your application
+-    `NEXT_PUBLIC_APPKIT_PROJECT_ID`: Your WalletConnect project ID
+-    `NEXT_PUBLIC_NEYNAR_API_URL`: We have used [Neynar](https://docs.neynar.com/reference/quickstart) an an independent 3rd party provider that offers Farcaster data
+-    `NEYNAR_API_KEY`: Neynar API key to call REST APIs.
 
-4. **Update the Frame metadata** in `frontend/src/app/layout.tsx` with your deployed URL
+##### 4. **Update the Frame metadata** in `frontend/src/app/layout.tsx` with your deployed URL
 
-## Publishing Your Farcaster Frame
+### Publishing Your Farcaster Frame
 
 To properly publish your Farcaster Frame and make it discoverable in the Farcaster ecosystem, follow these steps:
 
-### 1. Set Up Domain Verification
+##### 1. Set Up Domain Verification
 
 Create a `.well-known/farcaster.json` file in your public directory with the following structure:
 
@@ -467,7 +629,7 @@ Create a `.well-known/farcaster.json` file in your public directory with the fol
 }
 ```
 
-### 2. Generate Account Association Credentials
+##### 2. Generate Account Association Credentials
 
 To generate the `header`, `payload`, and `signature` values:
 
@@ -476,7 +638,7 @@ To generate the `header`, `payload`, and `signature` values:
 3. Click "Add Domain" and follow the instructions to verify your domain
 4. Copy the generated values into your `farcaster.json` file
 
-### 3. Configure Frame Metadata
+##### 3. Configure Frame Metadata
 
 The `frame` section in your `farcaster.json` file defines how your Frame appears in Farcaster clients:
 
@@ -487,27 +649,14 @@ The `frame` section in your `farcaster.json` file defines how your Frame appears
 -    `buttonTitle`: Text displayed on the Frame button
 -    `splashBackgroundColor`: Background color when loading your Frame
 
-### 4. Add Frame Metadata to Your HTML
-
-In addition to the `farcaster.json` file, you need to add Frame metadata to your HTML as shown in the layout component:
-
-```tsx
-<head>
-	<meta
-		name="fc:frame"
-		content='{"version":"next","imageUrl":"https://your-domain.com/image.png","button":{"title":"Mint NFT in Polkadot","action":{"type":"launch_frame","name":"","url":"https://your-domain.com/","splashBackgroundColor":"#f5f5f5"}}}'
-	/>
-</head>
-```
-
-### 5. Test Your Frame
+##### 4. Test Your Frame
 
 Before publishing, test your Frame using:
 
 1. [Frames.js Debugger](https://debugger.framesjs.org/)
 2. [Warpcast Embed Tool](https://warpcast.com/~/developers/mini-apps/embed)
 
-### 6. Publish Your Frame
+##### 5. Publish Your Frame
 
 Once tested, you can publish your Frame by:
 
