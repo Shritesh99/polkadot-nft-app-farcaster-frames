@@ -48,7 +48,7 @@ export default function Home() {
 	}, []);
 
 	return (
-		<main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100"
+		<main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
 			<Toaster position="top-right" />
 			<div className="mx-auto">
 				<nav className="bg-white shadow-md sticky top-0 z-10">
