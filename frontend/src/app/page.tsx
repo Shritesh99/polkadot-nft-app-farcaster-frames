@@ -31,7 +31,7 @@ export default function Home() {
 			try {
 				await sdk.actions.ready();
 				const context = await sdk.context;
-				setUserContext(context as unknown as FrameContext);
+				setUserContext(context as unknown as FrameContext
 
 				if (context?.user?.fid) {
 					await verifyUser(
