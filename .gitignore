@@ -44,3 +44,5 @@ next-env.d.ts
 /data
 /chain-spec
 /k8s
+
+/.history
